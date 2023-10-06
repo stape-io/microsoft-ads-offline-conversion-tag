@@ -180,7 +180,8 @@ ___TEMPLATE_PARAMETERS___
           {
             "type": "NON_EMPTY"
           }
-        ]
+        ],
+        "defaultValue": "USD"
       },
       {
         "type": "TEXT",
@@ -381,7 +382,7 @@ function updateAccessToken(refreshToken) {
     enc(data.clientId) +
     '&client_secret=' +
     enc(data.clientSecret) +
-    '&grant_type=refresh_token&scope=https%3A%2F%2Fads.microsoft.com%2Fads.manage+offline_access&tenant=common';
+    '&grant_type=refresh_token&scope=https%3A%2F%2Fads.microsoft.com%2Fmsads.manage+offline_access&tenant=common';
 
   if (isLoggingEnabled) {
     logToConsole(
@@ -467,26 +468,30 @@ function getData(accessToken) {
     userEventData = eventData.user_data || eventData.user_properties || eventData.user;
   }
 
-  let email = data.hashedEmailAddress;
+  let email;
   if (eventData.hashedEmail) email = eventData.hashedEmail;
   else if (eventData.email) email = eventData.email;
   else if (eventData.email_address) email = eventData.email_address;
   else if (userEventData.email) email = userEventData.email;
   else if (userEventData.email_address) email = userEventData.email_address;
 
-  let phone = data.hashedPhoneNumber;
+  let phone;
   if (eventData.phone) phone = eventData.phone;
   else if (eventData.phone_number) phone = eventData.phone_number;
   else if (userEventData.phone) phone = userEventData.phone;
   else if (userEventData.phone_number) phone = userEventData.phone_number;
 
-  let value = data.conversionValue;
+  let value;
   if (eventData.value) value = eventData.value;
 
   let conversionCurrencyCode = 'USD';
   if (data.conversionCurrencyCode) conversionCurrencyCode = data.conversionCurrencyCode;
   else if (eventData.currencyCode) conversionCurrencyCode = eventData.currencyCode;
   else if (eventData.currency) conversionCurrencyCode = eventData.currency;
+
+  if (data.hashedEmailAddress) email = data.hashedEmailAddress;
+  if (data.hashedPhoneNumber) phone = data.hashedPhoneNumber;
+  if (data.conversionValue) value = data.conversionValue;
 
   let externalAttributionCredit = data.externalAttributionCredit;
   let externalAttributionModel = data.externalAttributionModel;
