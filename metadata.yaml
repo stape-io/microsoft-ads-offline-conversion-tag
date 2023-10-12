@@ -1,5 +1,7 @@
 homepage: "https://stape.io/"
 versions:
+  - sha: cc28b6610d35355d56156917dce7aa72ead9908e
+    changeNotes: Auth update fix.
   - sha: 9da14741fa4eeefca4e861fd26067efd10b425e3
     changeNotes: Fix override issues.
   - sha: 3b0724523d977465a8b39f737b79ba6a4a876eb5
