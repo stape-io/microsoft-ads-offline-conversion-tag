@@ -354,7 +354,11 @@ function sendConversionRequest(postBody, refreshToken) {
       }
 
       if (statusCode >= 200 && statusCode < 400) {
-        data.gtmOnSuccess();
+        if (body.indexOf('Authentication token expired') !== -1) {
+          updateAccessToken(refreshToken);
+        } else {
+          data.gtmOnSuccess();
+        }
       } else if (statusCode === 401) {
         updateAccessToken(refreshToken);
       } else {
