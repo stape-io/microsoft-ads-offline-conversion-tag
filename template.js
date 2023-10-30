@@ -130,7 +130,7 @@ function updateAccessToken(refreshToken) {
 
         Firestore.write(data.firebasePath, bodyParsed, firebaseOptions).then(
           () => {
-            sendConversionRequest(bodyParsed.access_token, data.refreshToken);
+            sendConversionRequest(getData(bodyParsed.access_token), data.refreshToken);
           },
           data.gtmOnFailure
         );
