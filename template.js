@@ -175,35 +175,14 @@ function getUrl() {
 function getData(accessToken) {
   const eventData = getAllEventData();
 
-  let userEventData = {};
-  if (getType(eventData.user_data) === 'object') {
-    userEventData = eventData.user_data || eventData.user_properties || eventData.user;
-  }
-
-  let email;
-  if (eventData.hashedEmail) email = eventData.hashedEmail;
-  else if (eventData.email) email = eventData.email;
-  else if (eventData.email_address) email = eventData.email_address;
-  else if (userEventData.email) email = userEventData.email;
-  else if (userEventData.email_address) email = userEventData.email_address;
-
-  let phone;
-  if (eventData.phone) phone = eventData.phone;
-  else if (eventData.phone_number) phone = eventData.phone_number;
-  else if (userEventData.phone) phone = userEventData.phone;
-  else if (userEventData.phone_number) phone = userEventData.phone_number;
-
-  let value;
-  if (eventData.value) value = eventData.value;
+  const email = data.hashedEmailAddress;
+  const phone = data.hashedPhoneNumber;
+  const value = data.conversionValue || eventData.value;
 
   let conversionCurrencyCode = 'USD';
   if (data.conversionCurrencyCode) conversionCurrencyCode = data.conversionCurrencyCode;
   else if (eventData.currencyCode) conversionCurrencyCode = eventData.currencyCode;
   else if (eventData.currency) conversionCurrencyCode = eventData.currency;
-
-  if (data.hashedEmailAddress) email = data.hashedEmailAddress;
-  if (data.hashedPhoneNumber) phone = data.hashedPhoneNumber;
-  if (data.conversionValue) value = data.conversionValue;
 
   let externalAttributionCredit = data.externalAttributionCredit;
   let externalAttributionModel = data.externalAttributionModel;
