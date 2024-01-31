@@ -1,5 +1,7 @@
 homepage: "https://stape.io/"
 versions:
+  - sha: 99fc58a53bb02e4486518ec86f9abaef4279d09d
+    changeNotes: Remove user data auto parsing.
   - sha: 925322f7c18e1f825d2282569c437c0f2693ec69
     changeNotes: Fix issue with refresh token.
   - sha: cc28b6610d35355d56156917dce7aa72ead9908e
