@@ -15,19 +15,31 @@ const Math = require('Math');
 const isLoggingEnabled = determinateIsLoggingEnabled();
 const traceId = getRequestHeader('trace-id');
 
-let firebaseOptions = {};
+if (!data.microsoftClickId && !data.hashedEmailAddress && !data.hashedPhoneNumber) {
+  return data.gtmOnSuccess();
+}
+
+
+if (data.authFlow === 'stape') {
+  return sendConversionRequest(
+    getData('StapeAccessToken', 'StapeDeveloperToken'),
+    handleStapeResponse
+  );
+}
+
+const firebaseOptions = {};
 if (data.firebaseProjectId) firebaseOptions.projectId = data.firebaseProjectId;
 
 Firestore.read(data.firebasePath, firebaseOptions).then(
   (result) => {
-    const postBody = getData(result.data.access_token);
+    const postBody = getData(result.data.access_token, data.developerToken);
 
-    return sendConversionRequest(postBody, data.refreshToken);
+    return sendConversionRequest(postBody, getHandleResponse(result.data.refresh_token));
   },
   () => updateAccessToken(data.refreshToken)
 );
 
-function sendConversionRequest(postBody, refreshToken) {
+function sendConversionRequest(postBody, responseCallback) {
   const postUrl = getUrl();
 
   if (isLoggingEnabled) {
@@ -39,7 +51,7 @@ function sendConversionRequest(postBody, refreshToken) {
         EventName: data.conversionName,
         RequestMethod: 'POST',
         RequestUrl: postUrl,
-        RequestBody: postBody,
+        RequestBody: postBody
       })
     );
   }
@@ -56,32 +68,46 @@ function sendConversionRequest(postBody, refreshToken) {
             EventName: data.conversionName,
             ResponseStatusCode: statusCode,
             ResponseHeaders: headers,
-            ResponseBody: body,
+            ResponseBody: body
           })
         );
       }
 
-      if (statusCode >= 200 && statusCode < 400) {
-        if (body.indexOf('Authentication token expired') !== -1) {
-          updateAccessToken(refreshToken);
-        } else {
-          data.gtmOnSuccess();
-        }
-      } else if (statusCode === 401) {
-        updateAccessToken(refreshToken);
-      } else {
-        data.gtmOnFailure();
-      }
+      responseCallback(statusCode, headers, body);
     },
     { headers: getConversionRequestHeaders(), method: 'POST' },
     postBody
   );
 }
 
+function handleStapeResponse(statusCode, headers, body) {
+  if (statusCode >= 200 && statusCode < 400) {
+    data.gtmOnSuccess();
+  } else {
+    data.gtmOnFailure();
+  }
+}
+
+function getHandleResponse(refreshToken) {
+  return (statusCode, headers, body) => {
+    if (statusCode >= 200 && statusCode < 400) {
+      if (body.indexOf('Authentication token expired') !== -1) {
+        updateAccessToken(refreshToken);
+      } else {
+        data.gtmOnSuccess();
+      }
+    } else if (statusCode === 401) {
+      updateAccessToken(refreshToken);
+    } else {
+      data.gtmOnFailure();
+    }
+  };
+}
+
 function getConversionRequestHeaders() {
   return {
     'Content-Type': 'text/xml; charset=utf-8',
-    'SOAPAction': 'ApplyOfflineConversions',
+    'SOAPAction': 'ApplyOfflineConversions'
   };
 }
 
@@ -104,7 +130,7 @@ function updateAccessToken(refreshToken) {
         TraceId: traceId,
         EventName: 'Auth',
         RequestMethod: 'POST',
-        RequestUrl: authUrl,
+        RequestUrl: authUrl
       })
     );
   }
@@ -120,7 +146,7 @@ function updateAccessToken(refreshToken) {
             TraceId: traceId,
             EventName: 'Auth',
             ResponseStatusCode: statusCode,
-            ResponseHeaders: headers,
+            ResponseHeaders: headers
           })
         );
       }
@@ -130,7 +156,10 @@ function updateAccessToken(refreshToken) {
 
         Firestore.write(data.firebasePath, bodyParsed, firebaseOptions).then(
           () => {
-            sendConversionRequest(getData(bodyParsed.access_token), data.refreshToken);
+            sendConversionRequest(
+              getData(bodyParsed.access_token, data.developerToken),
+              getHandleResponse(bodyParsed.refresh_token)
+            );
           },
           data.gtmOnFailure
         );
@@ -140,14 +169,14 @@ function updateAccessToken(refreshToken) {
     },
     {
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      method: 'POST',
+      method: 'POST'
     },
     authBody
   );
 }
 
 function getUrl() {
-  if (data.developerTokenOwn) {
+  if (data.authFlow === 'own') {
     const apiVersion = '13';
 
     return 'https://campaign.api.bingads.microsoft.com/Api/Advertiser/CampaignManagement/V' + apiVersion + '/CampaignManagementService.svc?singleWsdl';
@@ -168,11 +197,11 @@ function getUrl() {
     enc(containerDefaultDomainEnd) +
     '/stape-api/' +
     enc(containerApiKey) +
-    '/v1/microsoft-ads/auth-proxy'
+    '/v2/microsoft-ads/auth-proxy'
   );
 }
 
-function getData(accessToken) {
+function getData(accessToken, developerToken) {
   const eventData = getAllEventData();
 
   const email = data.hashedEmailAddress;
@@ -192,10 +221,10 @@ function getData(accessToken) {
     '<s:Envelope xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns:s="http://schemas.xmlsoap.org/soap/envelope/">\n' +
     '    <s:Header xmlns="https://bingads.microsoft.com/CampaignManagement/v13">\n' +
     '        <Action mustUnderstand="1">ApplyOfflineConversions</Action>\n' +
-    '        <AuthenticationToken i:nil="false">'+accessToken+'</AuthenticationToken>\n' +
-    '        <CustomerAccountId i:nil="false">'+data.customerAccountId+'</CustomerAccountId>\n' +
-    '        <CustomerId i:nil="false">'+data.customerId+'</CustomerId>\n' +
-    '        <DeveloperToken i:nil="false">'+(data.developerTokenOwn ? data.developerToken : 'StapeDeveloperToken')+'</DeveloperToken>\n' +
+    '        <AuthenticationToken i:nil="false">' + accessToken + '</AuthenticationToken>\n' +
+    '        <CustomerAccountId i:nil="false">' + data.customerAccountId + '</CustomerAccountId>\n' +
+    '        <CustomerId i:nil="false">' + data.customerId + '</CustomerId>\n' +
+    '        <DeveloperToken i:nil="false">' + developerToken + '</DeveloperToken>\n' +
     '    </s:Header>\n' +
     '    <s:Body>\n' +
     '        <ApplyOfflineConversionsRequest xmlns="https://bingads.microsoft.com/CampaignManagement/v13">\n' +
@@ -268,19 +297,19 @@ function hashData(key, value) {
 }
 
 function convertTimestampToISO(timestamp) {
-  const secToMs = function (s) {
+  const secToMs = function(s) {
     return s * 1000;
   };
-  const minToMs = function (m) {
+  const minToMs = function(m) {
     return m * secToMs(60);
   };
-  const hoursToMs = function (h) {
+  const hoursToMs = function(h) {
     return h * minToMs(60);
   };
-  const daysToMs = function (d) {
+  const daysToMs = function(d) {
     return d * hoursToMs(24);
   };
-  const format = function (value) {
+  const format = function(value) {
     return value >= 10 ? value.toString() : '0' + value;
   };
   const fourYearsInMs = daysToMs(365 * 4 + 1);
