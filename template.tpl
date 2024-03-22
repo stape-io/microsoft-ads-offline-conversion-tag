@@ -51,6 +51,25 @@ ___TEMPLATE_PARAMETERS___
     "groupStyle": "ZIPPY_CLOSED",
     "subParams": [
       {
+        "type": "RADIO",
+        "name": "authFlow",
+        "displayName": "Authentication Flow",
+        "radioItems": [
+          {
+            "value": "stape",
+            "displayValue": "Stape Microsoft Connection",
+            "help": "Learn how to setup Stape Microsoft Connection \u003ca href\u003d\"https://stape.io/blog/microsoft-ads-bing-offline-conversion-tracking\"\u003ehere\u003c/a\u003e"
+          },
+          {
+            "value": "own",
+            "displayValue": "Own Developer Token",
+            "help": "\u003ca href\u003d\"https://learn.microsoft.com/en-us/advertising/guides/get-started?view\u003dbingads-13#get-developer-token\" target\u003d\"_blank\"\u003eMore info about developer tokens.\u003c/a\u003e"
+          }
+        ],
+        "simpleValueType": true,
+        "defaultValue": "stape"
+      },
+      {
         "type": "TEXT",
         "name": "clientId",
         "displayName": "Client ID",
@@ -60,7 +79,14 @@ ___TEMPLATE_PARAMETERS___
             "type": "NON_EMPTY"
           }
         ],
-        "help": "More info on how to get Authentication credentials \u003ca target\u003d\"_blank\" href\u003d\"https://learn.microsoft.com/en-us/advertising/guides/get-started?view\u003dbingads-13#access-token\"\u003ecan be found by this link\u003c/a\u003e."
+        "help": "More info on how to get Authentication credentials \u003ca target\u003d\"_blank\" href\u003d\"https://learn.microsoft.com/en-us/advertising/guides/get-started?view\u003dbingads-13#access-token\"\u003ecan be found by this link\u003c/a\u003e.",
+        "enablingConditions": [
+          {
+            "paramName": "authFlow",
+            "paramValue": "own",
+            "type": "EQUALS"
+          }
+        ]
       },
       {
         "type": "TEXT",
@@ -70,6 +96,13 @@ ___TEMPLATE_PARAMETERS___
         "valueValidators": [
           {
             "type": "NON_EMPTY"
+          }
+        ],
+        "enablingConditions": [
+          {
+            "paramName": "authFlow",
+            "paramValue": "own",
+            "type": "EQUALS"
           }
         ]
       },
@@ -81,6 +114,13 @@ ___TEMPLATE_PARAMETERS___
         "valueValidators": [
           {
             "type": "NON_EMPTY"
+          }
+        ],
+        "enablingConditions": [
+          {
+            "paramName": "authFlow",
+            "paramValue": "own",
+            "type": "EQUALS"
           }
         ]
       },
@@ -118,8 +158,8 @@ ___TEMPLATE_PARAMETERS___
         ],
         "enablingConditions": [
           {
-            "paramName": "developerTokenOwn",
-            "paramValue": true,
+            "paramName": "authFlow",
+            "paramValue": "own",
             "type": "EQUALS"
           }
         ]
@@ -136,20 +176,12 @@ ___TEMPLATE_PARAMETERS___
         ],
         "enablingConditions": [
           {
-            "paramName": "developerTokenOwn",
-            "paramValue": false,
+            "paramName": "authFlow",
+            "paramValue": "stape",
             "type": "EQUALS"
           }
         ],
         "help": "It can be found in the detailed view of the container inside your \u003ca href\u003d\"https://app.stape.io/container/\" target\u003d\"_blank\"\u003eStape account\u003c/a\u003e."
-      },
-      {
-        "type": "CHECKBOX",
-        "name": "developerTokenOwn",
-        "checkboxText": "Use own developer token",
-        "simpleValueType": true,
-        "defaultValue": false,
-        "help": "The process of obtaining Microsoft Ads API Developer token is pretty complicated. If you use Stape hosting, your requests will be signed with Stape\u0027s Developer Token. If you use other hosting or you have your own Developer Token, you can override it.\n\u003cbr\u003e\u003cbr\u003e\n\u003ca href\u003d\"https://learn.microsoft.com/en-us/advertising/guides/get-started?view\u003dbingads-13#get-developer-token\" target\u003d\"_blank\"\u003eMore info about developer tokens.\u003c/a\u003e"
       }
     ]
   },
@@ -255,6 +287,13 @@ ___TEMPLATE_PARAMETERS___
         ],
         "defaultValue": "stape/microsoft-ads-offline-auth"
       }
+    ],
+    "enablingConditions": [
+      {
+        "paramName": "authFlow",
+        "paramValue": "own",
+        "type": "EQUALS"
+      }
     ]
   },
   {
@@ -307,19 +346,31 @@ const Math = require('Math');
 const isLoggingEnabled = determinateIsLoggingEnabled();
 const traceId = getRequestHeader('trace-id');
 
-let firebaseOptions = {};
+if (!data.microsoftClickId && !data.hashedEmailAddress && !data.hashedPhoneNumber) {
+  return data.gtmOnSuccess();
+}
+
+
+if (data.authFlow === 'stape') {
+  return sendConversionRequest(
+    getData('StapeAccessToken', 'StapeDeveloperToken'),
+    handleStapeResponse
+  );
+}
+
+const firebaseOptions = {};
 if (data.firebaseProjectId) firebaseOptions.projectId = data.firebaseProjectId;
 
 Firestore.read(data.firebasePath, firebaseOptions).then(
   (result) => {
-    const postBody = getData(result.data.access_token);
+    const postBody = getData(result.data.access_token, data.developerToken);
 
-    return sendConversionRequest(postBody, data.refreshToken);
+    return sendConversionRequest(postBody, getHandleResponse(result.data.refresh_token));
   },
   () => updateAccessToken(data.refreshToken)
 );
 
-function sendConversionRequest(postBody, refreshToken) {
+function sendConversionRequest(postBody, responseCallback) {
   const postUrl = getUrl();
 
   if (isLoggingEnabled) {
@@ -331,7 +382,7 @@ function sendConversionRequest(postBody, refreshToken) {
         EventName: data.conversionName,
         RequestMethod: 'POST',
         RequestUrl: postUrl,
-        RequestBody: postBody,
+        RequestBody: postBody
       })
     );
   }
@@ -348,32 +399,46 @@ function sendConversionRequest(postBody, refreshToken) {
             EventName: data.conversionName,
             ResponseStatusCode: statusCode,
             ResponseHeaders: headers,
-            ResponseBody: body,
+            ResponseBody: body
           })
         );
       }
 
-      if (statusCode >= 200 && statusCode < 400) {
-        if (body.indexOf('Authentication token expired') !== -1) {
-          updateAccessToken(refreshToken);
-        } else {
-          data.gtmOnSuccess();
-        }
-      } else if (statusCode === 401) {
-        updateAccessToken(refreshToken);
-      } else {
-        data.gtmOnFailure();
-      }
+      responseCallback(statusCode, headers, body);
     },
     { headers: getConversionRequestHeaders(), method: 'POST' },
     postBody
   );
 }
 
+function handleStapeResponse(statusCode, headers, body) {
+  if (statusCode >= 200 && statusCode < 400) {
+    data.gtmOnSuccess();
+  } else {
+    data.gtmOnFailure();
+  }
+}
+
+function getHandleResponse(refreshToken) {
+  return (statusCode, headers, body) => {
+    if (statusCode >= 200 && statusCode < 400) {
+      if (body.indexOf('Authentication token expired') !== -1) {
+        updateAccessToken(refreshToken);
+      } else {
+        data.gtmOnSuccess();
+      }
+    } else if (statusCode === 401) {
+      updateAccessToken(refreshToken);
+    } else {
+      data.gtmOnFailure();
+    }
+  };
+}
+
 function getConversionRequestHeaders() {
   return {
     'Content-Type': 'text/xml; charset=utf-8',
-    'SOAPAction': 'ApplyOfflineConversions',
+    'SOAPAction': 'ApplyOfflineConversions'
   };
 }
 
@@ -396,7 +461,7 @@ function updateAccessToken(refreshToken) {
         TraceId: traceId,
         EventName: 'Auth',
         RequestMethod: 'POST',
-        RequestUrl: authUrl,
+        RequestUrl: authUrl
       })
     );
   }
@@ -412,7 +477,7 @@ function updateAccessToken(refreshToken) {
             TraceId: traceId,
             EventName: 'Auth',
             ResponseStatusCode: statusCode,
-            ResponseHeaders: headers,
+            ResponseHeaders: headers
           })
         );
       }
@@ -422,7 +487,10 @@ function updateAccessToken(refreshToken) {
 
         Firestore.write(data.firebasePath, bodyParsed, firebaseOptions).then(
           () => {
-            sendConversionRequest(getData(bodyParsed.access_token), data.refreshToken);
+            sendConversionRequest(
+              getData(bodyParsed.access_token, data.developerToken),
+              getHandleResponse(bodyParsed.refresh_token)
+            );
           },
           data.gtmOnFailure
         );
@@ -432,14 +500,14 @@ function updateAccessToken(refreshToken) {
     },
     {
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      method: 'POST',
+      method: 'POST'
     },
     authBody
   );
 }
 
 function getUrl() {
-  if (data.developerTokenOwn) {
+  if (data.authFlow === 'own') {
     const apiVersion = '13';
 
     return 'https://campaign.api.bingads.microsoft.com/Api/Advertiser/CampaignManagement/V' + apiVersion + '/CampaignManagementService.svc?singleWsdl';
@@ -460,11 +528,11 @@ function getUrl() {
     enc(containerDefaultDomainEnd) +
     '/stape-api/' +
     enc(containerApiKey) +
-    '/v1/microsoft-ads/auth-proxy'
+    '/v2/microsoft-ads/auth-proxy'
   );
 }
 
-function getData(accessToken) {
+function getData(accessToken, developerToken) {
   const eventData = getAllEventData();
 
   const email = data.hashedEmailAddress;
@@ -484,10 +552,10 @@ function getData(accessToken) {
     '<s:Envelope xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns:s="http://schemas.xmlsoap.org/soap/envelope/">\n' +
     '    <s:Header xmlns="https://bingads.microsoft.com/CampaignManagement/v13">\n' +
     '        <Action mustUnderstand="1">ApplyOfflineConversions</Action>\n' +
-    '        <AuthenticationToken i:nil="false">'+accessToken+'</AuthenticationToken>\n' +
-    '        <CustomerAccountId i:nil="false">'+data.customerAccountId+'</CustomerAccountId>\n' +
-    '        <CustomerId i:nil="false">'+data.customerId+'</CustomerId>\n' +
-    '        <DeveloperToken i:nil="false">'+(data.developerTokenOwn ? data.developerToken : 'StapeDeveloperToken')+'</DeveloperToken>\n' +
+    '        <AuthenticationToken i:nil="false">' + accessToken + '</AuthenticationToken>\n' +
+    '        <CustomerAccountId i:nil="false">' + data.customerAccountId + '</CustomerAccountId>\n' +
+    '        <CustomerId i:nil="false">' + data.customerId + '</CustomerId>\n' +
+    '        <DeveloperToken i:nil="false">' + developerToken + '</DeveloperToken>\n' +
     '    </s:Header>\n' +
     '    <s:Body>\n' +
     '        <ApplyOfflineConversionsRequest xmlns="https://bingads.microsoft.com/CampaignManagement/v13">\n' +
@@ -560,19 +628,19 @@ function hashData(key, value) {
 }
 
 function convertTimestampToISO(timestamp) {
-  const secToMs = function (s) {
+  const secToMs = function(s) {
     return s * 1000;
   };
-  const minToMs = function (m) {
+  const minToMs = function(m) {
     return m * secToMs(60);
   };
-  const hoursToMs = function (h) {
+  const hoursToMs = function(h) {
     return h * minToMs(60);
   };
-  const daysToMs = function (d) {
+  const daysToMs = function(d) {
     return d * hoursToMs(24);
   };
-  const format = function (value) {
+  const format = function(value) {
     return value >= 10 ? value.toString() : '0' + value;
   };
   const fourYearsInMs = daysToMs(365 * 4 + 1);
