@@ -1,5 +1,7 @@
 homepage: "https://stape.io/"
 versions:
+  - sha: c9b96b1d4e750a9e3cf38cd2d84c5bc120b66b8a
+    changeNotes: Stape Microsoft Connection.
   - sha: 99fc58a53bb02e4486518ec86f9abaef4279d09d
     changeNotes: Remove user data auto parsing.
   - sha: 925322f7c18e1f825d2282569c437c0f2693ec69
