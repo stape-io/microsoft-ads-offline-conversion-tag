@@ -208,11 +208,6 @@ ___TEMPLATE_PARAMETERS___
         "name": "conversionCurrencyCode",
         "displayName": "Currency Code",
         "simpleValueType": true,
-        "valueValidators": [
-          {
-            "type": "NON_EMPTY"
-          }
-        ],
         "defaultValue": "USD"
       },
       {
@@ -539,7 +534,7 @@ function getData(accessToken, developerToken) {
   const phone = data.hashedPhoneNumber;
   const value = data.conversionValue || eventData.value;
 
-  let conversionCurrencyCode = 'USD';
+  let conversionCurrencyCode = '';
   if (data.conversionCurrencyCode) conversionCurrencyCode = data.conversionCurrencyCode;
   else if (eventData.currencyCode) conversionCurrencyCode = eventData.currencyCode;
   else if (eventData.currency) conversionCurrencyCode = eventData.currency;
