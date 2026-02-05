@@ -580,67 +580,34 @@ function getData(accessToken, developerToken) {
   let externalAttributionModel = data.externalAttributionModel;
   let microsoftClickId = data.microsoftClickId;
 
-  return (
-    '' +
+  // prettier-ignore
+  return '' +
     '<s:Envelope xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns:s="http://schemas.xmlsoap.org/soap/envelope/">\n' +
     '    <s:Header xmlns="https://bingads.microsoft.com/CampaignManagement/v13">\n' +
     '        <Action mustUnderstand="1">ApplyOfflineConversions</Action>\n' +
-    '        <AuthenticationToken i:nil="false">' +
-    accessToken +
-    '</AuthenticationToken>\n' +
-    '        <CustomerAccountId i:nil="false">' +
-    data.customerAccountId +
-    '</CustomerAccountId>\n' +
-    '        <CustomerId i:nil="false">' +
-    data.customerId +
-    '</CustomerId>\n' +
-    '        <DeveloperToken i:nil="false">' +
-    developerToken +
-    '</DeveloperToken>\n' +
+    '        <AuthenticationToken i:nil="false">' + accessToken + '</AuthenticationToken>\n' +
+    '        <CustomerAccountId i:nil="false">' + data.customerAccountId + '</CustomerAccountId>\n' +
+    '        <CustomerId i:nil="false">' + data.customerId + '</CustomerId>\n' +
+    '        <DeveloperToken i:nil="false">' + developerToken + '</DeveloperToken>\n' +
     '    </s:Header>\n' +
     '    <s:Body>\n' +
     '        <ApplyOfflineConversionsRequest xmlns="https://bingads.microsoft.com/CampaignManagement/v13">\n' +
     '            <OfflineConversions i:nil="false">\n' +
     '                <OfflineConversion>\n' +
-    '                    <ConversionCurrencyCode i:nil="false">' +
-    conversionCurrencyCode +
-    '</ConversionCurrencyCode>\n' +
-    '                    <ConversionName i:nil="false">' +
-    data.conversionName +
-    '</ConversionName>\n' +
-    '                    <ConversionTime>' +
-    (data.conversionTime ? data.conversionTime : getConversionDateTime()) +
-    '</ConversionTime>\n' +
-    (value ? '<ConversionValue i:nil="false">' + value + '</ConversionValue>\n' : '') +
-    (externalAttributionCredit
-      ? '<ExternalAttributionCredit i:nil="false">' +
-        externalAttributionCredit +
-        '</ExternalAttributionCredit>\n'
-      : '') +
-    (externalAttributionModel
-      ? '<ExternalAttributionModel i:nil="false">' +
-        externalAttributionModel +
-        '</ExternalAttributionModel>\n'
-      : '') +
-    (email
-      ? '<HashedEmailAddress i:nil="false">' +
-        hashData('hashedEmailAddress', email) +
-        '</HashedEmailAddress>\n'
-      : '') +
-    (phone
-      ? '<HashedPhoneNumber i:nil="false">' +
-        hashData('hashedPhoneNumber', phone) +
-        '</HashedPhoneNumber>\n'
-      : '') +
-    (microsoftClickId
-      ? '<MicrosoftClickId i:nil="false">' + microsoftClickId + '</MicrosoftClickId>\n'
-      : '') +
+    '                    <ConversionCurrencyCode i:nil="false">'+conversionCurrencyCode+'</ConversionCurrencyCode>\n' +
+    '                    <ConversionName i:nil="false">'+data.conversionName+'</ConversionName>\n' +
+    '                    <ConversionTime>'+(data.conversionTime ? data.conversionTime : getConversionDateTime())+'</ConversionTime>\n' +
+                         (value ? '<ConversionValue i:nil="false">'+value+'</ConversionValue>\n' : '') +
+                         (externalAttributionCredit ? '<ExternalAttributionCredit i:nil="false">'+externalAttributionCredit+'</ExternalAttributionCredit>\n' : '') +
+                         (externalAttributionModel ? '<ExternalAttributionModel i:nil="false">'+externalAttributionModel+'</ExternalAttributionModel>\n' : '') +
+                         (email ? '<HashedEmailAddress i:nil="false">'+hashData('hashedEmailAddress', email)+'</HashedEmailAddress>\n' : '') +
+                         (phone ? '<HashedPhoneNumber i:nil="false">'+hashData('hashedPhoneNumber', phone)+'</HashedPhoneNumber>\n' : '') +
+                         (microsoftClickId ? '<MicrosoftClickId i:nil="false">'+microsoftClickId+'</MicrosoftClickId>\n' : '') +
     '                </OfflineConversion>\n' +
     '            </OfflineConversions>\n' +
     '        </ApplyOfflineConversionsRequest>\n' +
     '    </s:Body>\n' +
-    '</s:Envelope>'
-  );
+    '</s:Envelope>';
 }
 
 /*==============================================================================
