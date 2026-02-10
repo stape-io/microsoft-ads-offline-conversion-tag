@@ -1,24 +1,31 @@
-const JSON = require('JSON');
-const sendHttpRequest = require('sendHttpRequest');
-const getContainerVersion = require('getContainerVersion');
-const logToConsole = require('logToConsole');
-const getRequestHeader = require('getRequestHeader');
 const encodeUriComponent = require('encodeUriComponent');
 const Firestore = require('Firestore');
 const getAllEventData = require('getAllEventData');
-const makeString = require('makeString');
+const getContainerVersion = require('getContainerVersion');
+const getRequestHeader = require('getRequestHeader');
 const getTimestampMillis = require('getTimestampMillis');
 const getType = require('getType');
-const sha256Sync = require('sha256Sync');
+const JSON = require('JSON');
+const logToConsole = require('logToConsole');
+const makeString = require('makeString');
 const Math = require('Math');
+const sendHttpRequest = require('sendHttpRequest');
+const sha256Sync = require('sha256Sync');
 
+/*==============================================================================
+==============================================================================*/
+
+const eventData = getAllEventData();
 const isLoggingEnabled = determinateIsLoggingEnabled();
 const traceId = getRequestHeader('trace-id');
+const firebaseOptions = {};
 
+if (!isConsentGivenOrNotRequired(data, eventData)) {
+  return data.gtmOnSuccess();
+}
 if (!data.microsoftClickId && !data.hashedEmailAddress && !data.hashedPhoneNumber) {
   return data.gtmOnSuccess();
 }
-
 
 if (data.authFlow === 'stape') {
   return sendConversionRequest(
@@ -27,7 +34,6 @@ if (data.authFlow === 'stape') {
   );
 }
 
-const firebaseOptions = {};
 if (data.firebaseProjectId) firebaseOptions.projectId = data.firebaseProjectId;
 
 Firestore.read(data.firebasePath, firebaseOptions).then(
@@ -38,6 +44,10 @@ Firestore.read(data.firebasePath, firebaseOptions).then(
   },
   () => updateAccessToken(data.refreshToken)
 );
+
+/*==============================================================================
+Vendor related functions
+==============================================================================*/
 
 function sendConversionRequest(postBody, responseCallback) {
   const postUrl = getUrl();
@@ -107,7 +117,7 @@ function getHandleResponse(refreshToken) {
 function getConversionRequestHeaders() {
   return {
     'Content-Type': 'text/xml; charset=utf-8',
-    'SOAPAction': 'ApplyOfflineConversions'
+    SOAPAction: 'ApplyOfflineConversions'
   };
 }
 
@@ -154,15 +164,12 @@ function updateAccessToken(refreshToken) {
       if (statusCode >= 200 && statusCode < 400) {
         let bodyParsed = JSON.parse(body);
 
-        Firestore.write(data.firebasePath, bodyParsed, firebaseOptions).then(
-          () => {
-            sendConversionRequest(
-              getData(bodyParsed.access_token, data.developerToken),
-              getHandleResponse(bodyParsed.refresh_token)
-            );
-          },
-          data.gtmOnFailure
-        );
+        Firestore.write(data.firebasePath, bodyParsed, firebaseOptions).then(() => {
+          sendConversionRequest(
+            getData(bodyParsed.access_token, data.developerToken),
+            getHandleResponse(bodyParsed.refresh_token)
+          );
+        }, data.gtmOnFailure);
       } else {
         data.gtmOnFailure();
       }
@@ -179,7 +186,11 @@ function getUrl() {
   if (data.authFlow === 'own') {
     const apiVersion = '13';
 
-    return 'https://campaign.api.bingads.microsoft.com/Api/Advertiser/CampaignManagement/V' + apiVersion + '/CampaignManagementService.svc?singleWsdl';
+    return (
+      'https://campaign.api.bingads.microsoft.com/Api/Advertiser/CampaignManagement/V' +
+      apiVersion +
+      '/CampaignManagementService.svc?singleWsdl'
+    );
   }
 
   const containerKey = data.containerKey.split(':');
@@ -217,6 +228,7 @@ function getData(accessToken, developerToken) {
   let externalAttributionModel = data.externalAttributionModel;
   let microsoftClickId = data.microsoftClickId;
 
+  // prettier-ignore
   return '' +
     '<s:Envelope xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns:s="http://schemas.xmlsoap.org/soap/envelope/">\n' +
     '    <s:Header xmlns="https://bingads.microsoft.com/CampaignManagement/v13">\n' +
@@ -244,6 +256,22 @@ function getData(accessToken, developerToken) {
     '        </ApplyOfflineConversionsRequest>\n' +
     '    </s:Body>\n' +
     '</s:Envelope>';
+}
+
+/*==============================================================================
+Helpers
+==============================================================================*/
+
+function isConsentGivenOrNotRequired(data, eventData) {
+  if (data.adStorageConsent !== 'required') return true;
+  if (eventData.consent_state) return !!eventData.consent_state.ad_storage;
+  const xGaGcs = eventData['x-ga-gcs'] || ''; // x-ga-gcs is a string like "G110"
+  return xGaGcs[2] === '1';
+}
+
+function enc(data) {
+  if (['null', 'undefined'].indexOf(getType(data)) !== -1) data = '';
+  return encodeUriComponent(makeString(data));
 }
 
 function getConversionDateTime() {
@@ -282,34 +310,26 @@ function hashData(key, value) {
   value = makeString(value).trim().toLowerCase();
 
   if (key === 'hashedPhoneNumber') {
-    value = value
-      .split(' ')
-      .join('')
-      .split('-')
-      .join('')
-      .split('(')
-      .join('')
-      .split(')')
-      .join('');
+    value = value.split(' ').join('').split('-').join('').split('(').join('').split(')').join('');
   }
 
   return sha256Sync(value, { outputEncoding: 'hex' });
 }
 
 function convertTimestampToISO(timestamp) {
-  const secToMs = function(s) {
+  const secToMs = function (s) {
     return s * 1000;
   };
-  const minToMs = function(m) {
+  const minToMs = function (m) {
     return m * secToMs(60);
   };
-  const hoursToMs = function(h) {
+  const hoursToMs = function (h) {
     return h * minToMs(60);
   };
-  const daysToMs = function(d) {
+  const daysToMs = function (d) {
     return d * hoursToMs(24);
   };
-  const format = function(value) {
+  const format = function (value) {
     return value >= 10 ? value.toString() : '0' + value;
   };
   const fourYearsInMs = daysToMs(365 * 4 + 1);
@@ -385,9 +405,4 @@ function determinateIsLoggingEnabled() {
   }
 
   return data.logType === 'always';
-}
-
-function enc(data) {
-  data = data || '';
-  return encodeUriComponent(data);
 }

@@ -1,5 +1,8 @@
-homepage: "https://stape.io/"
+homepage: 'https://stape.io/'
+documentation: 'https://github.com/stape-io/microsoft-ads-offline-conversion-tag'
 versions:
+  - sha: 5fb23ce574325a78492699da92212b3cfa82ed3c
+    changeNotes: Updated consent section.
   - sha: f095bcc583153092f8139f156b84f29e42eef257
     changeNotes: Currency not required for now.
   - sha: c9b96b1d4e750a9e3cf38cd2d84c5bc120b66b8a
