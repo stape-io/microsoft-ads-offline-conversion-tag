@@ -316,34 +316,6 @@ ___TEMPLATE_PARAMETERS___
         "defaultValue": "optional"
       }
     ]
-  },
-  {
-    "displayName": "Logs Settings",
-    "name": "logsGroup",
-    "groupStyle": "ZIPPY_CLOSED",
-    "type": "GROUP",
-    "subParams": [
-      {
-        "type": "RADIO",
-        "name": "logType",
-        "radioItems": [
-          {
-            "value": "no",
-            "displayValue": "Do not log"
-          },
-          {
-            "value": "debug",
-            "displayValue": "Log to console during debug and preview"
-          },
-          {
-            "value": "always",
-            "displayValue": "Always log to console"
-          }
-        ],
-        "simpleValueType": true,
-        "defaultValue": "debug"
-      }
-    ]
   }
 ]
 
@@ -353,14 +325,12 @@ ___SANDBOXED_JS_FOR_SERVER___
 const encodeUriComponent = require('encodeUriComponent');
 const Firestore = require('Firestore');
 const getAllEventData = require('getAllEventData');
-const getContainerVersion = require('getContainerVersion');
-const getRequestHeader = require('getRequestHeader');
 const getTimestampMillis = require('getTimestampMillis');
 const getType = require('getType');
 const JSON = require('JSON');
-const logToConsole = require('logToConsole');
 const makeString = require('makeString');
 const Math = require('Math');
+const Object = require('Object');
 const sendHttpRequest = require('sendHttpRequest');
 const sha256Sync = require('sha256Sync');
 
@@ -368,13 +338,13 @@ const sha256Sync = require('sha256Sync');
 ==============================================================================*/
 
 const eventData = getAllEventData();
-const isLoggingEnabled = determinateIsLoggingEnabled();
-const traceId = getRequestHeader('trace-id');
-const firebaseOptions = {};
 
 if (!isConsentGivenOrNotRequired(data, eventData)) {
   return data.gtmOnSuccess();
 }
+
+const firebaseOptions = {};
+
 if (!data.microsoftClickId && !data.hashedEmailAddress && !data.hashedPhoneNumber) {
   return data.gtmOnSuccess();
 }
@@ -403,38 +373,9 @@ Vendor related functions
 
 function sendConversionRequest(postBody, responseCallback) {
   const postUrl = getUrl();
-
-  if (isLoggingEnabled) {
-    logToConsole(
-      JSON.stringify({
-        Name: 'MicrosoftAdsOfflineConversion',
-        Type: 'Request',
-        TraceId: traceId,
-        EventName: data.conversionName,
-        RequestMethod: 'POST',
-        RequestUrl: postUrl,
-        RequestBody: postBody
-      })
-    );
-  }
-
   sendHttpRequest(
     postUrl,
     (statusCode, headers, body) => {
-      if (isLoggingEnabled) {
-        logToConsole(
-          JSON.stringify({
-            Name: 'MicrosoftAdsOfflineConversion',
-            Type: 'Response',
-            TraceId: traceId,
-            EventName: data.conversionName,
-            ResponseStatusCode: statusCode,
-            ResponseHeaders: headers,
-            ResponseBody: body
-          })
-        );
-      }
-
       responseCallback(statusCode, headers, body);
     },
     { headers: getConversionRequestHeaders(), method: 'POST' },
@@ -484,35 +425,9 @@ function updateAccessToken(refreshToken) {
     enc(data.clientSecret) +
     '&grant_type=refresh_token&scope=https%3A%2F%2Fads.microsoft.com%2Fmsads.manage+offline_access&tenant=common';
 
-  if (isLoggingEnabled) {
-    logToConsole(
-      JSON.stringify({
-        Name: 'MicrosoftAdsOfflineConversion',
-        Type: 'Request',
-        TraceId: traceId,
-        EventName: 'Auth',
-        RequestMethod: 'POST',
-        RequestUrl: authUrl
-      })
-    );
-  }
-
   sendHttpRequest(
     authUrl,
     (statusCode, headers, body) => {
-      if (isLoggingEnabled) {
-        logToConsole(
-          JSON.stringify({
-            Name: 'MicrosoftAdsOfflineConversion',
-            Type: 'Response',
-            TraceId: traceId,
-            EventName: 'Auth',
-            ResponseStatusCode: statusCode,
-            ResponseHeaders: headers
-          })
-        );
-      }
-
       if (statusCode >= 200 && statusCode < 400) {
         let bodyParsed = JSON.parse(body);
 
@@ -649,10 +564,15 @@ function hashData(key, value) {
     return undefined;
   }
 
+  if (type === 'array') {
+    return value.map((val) => hashData(val));
+  }
+
   if (type === 'object') {
-    return value.map((val) => {
-      return hashData(key, val);
-    });
+    return Object.keys(value).reduce((acc, val) => {
+      acc[val] = hashData(value[val]);
+      return acc;
+    }, {});
   }
 
   if (isHashed(value)) {
@@ -737,28 +657,6 @@ function convertTimestampToISO(timestamp) {
   );
 }
 
-function determinateIsLoggingEnabled() {
-  const containerVersion = getContainerVersion();
-  const isDebug = !!(
-    containerVersion &&
-    (containerVersion.debugMode || containerVersion.previewMode)
-  );
-
-  if (!data.logType) {
-    return isDebug;
-  }
-
-  if (data.logType === 'no') {
-    return false;
-  }
-
-  if (data.logType === 'debug') {
-    return isDebug;
-  }
-
-  return data.logType === 'always';
-}
-
 
 ___SERVER_PERMISSIONS___
 
@@ -799,102 +697,6 @@ ___SERVER_PERMISSIONS___
                 "string": "https://*.stape.net/*"
               }
             ]
-          }
-        }
-      ]
-    },
-    "clientAnnotations": {
-      "isEditedByUser": true
-    },
-    "isRequired": true
-  },
-  {
-    "instance": {
-      "key": {
-        "publicId": "logging",
-        "versionId": "1"
-      },
-      "param": [
-        {
-          "key": "environments",
-          "value": {
-            "type": 1,
-            "string": "all"
-          }
-        }
-      ]
-    },
-    "clientAnnotations": {
-      "isEditedByUser": true
-    },
-    "isRequired": true
-  },
-  {
-    "instance": {
-      "key": {
-        "publicId": "read_container_data",
-        "versionId": "1"
-      },
-      "param": []
-    },
-    "isRequired": true
-  },
-  {
-    "instance": {
-      "key": {
-        "publicId": "read_request",
-        "versionId": "1"
-      },
-      "param": [
-        {
-          "key": "headerWhitelist",
-          "value": {
-            "type": 2,
-            "listItem": [
-              {
-                "type": 3,
-                "mapKey": [
-                  {
-                    "type": 1,
-                    "string": "headerName"
-                  }
-                ],
-                "mapValue": [
-                  {
-                    "type": 1,
-                    "string": "trace-id"
-                  }
-                ]
-              }
-            ]
-          }
-        },
-        {
-          "key": "headersAllowed",
-          "value": {
-            "type": 8,
-            "boolean": true
-          }
-        },
-        {
-          "key": "requestAccess",
-          "value": {
-            "type": 1,
-            "string": "specific"
-          }
-        },
-        {
-          "key": "headerAccess",
-          "value": {
-            "type": 1,
-            "string": "specific"
-          }
-        },
-        {
-          "key": "queryParameterAccess",
-          "value": {
-            "type": 1,
-            "string": "any"
           }
         }
       ]
@@ -997,6 +799,8 @@ setup: ''
 
 ___NOTES___
 
-Created on 09/09/2023, 20:20:20
+2026-05-25 Change Notes:
+ - Logging removal.
 
+Created on 09/09/2023, 20:20:20
 
