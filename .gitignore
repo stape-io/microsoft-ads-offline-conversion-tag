@@ -1,2 +1,7 @@
 server-gtm-sandboxed-apis.d.ts
-.DS_Store
+.DS_Store.prettierignore
+**/.DS_Store
+node_modules
+jsconfig.json
+package-lock.json
+package.json
