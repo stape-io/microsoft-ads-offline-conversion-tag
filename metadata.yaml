@@ -1,6 +1,8 @@
 homepage: 'https://stape.io/'
 documentation: 'https://github.com/stape-io/microsoft-ads-offline-conversion-tag'
 versions:
+  - sha: 3b5cfb4b01b866843ccfca779a426c1457abeed6
+    changeNotes: Click ID prefix, auth error handling and conversion time fixes; optimistic scenario.
   - sha: b142581f85ab0bb9beeddbdb3fdacc1ac1398542
     changeNotes: Logging removal.
   - sha: 5fb23ce574325a78492699da92212b3cfa82ed3c
