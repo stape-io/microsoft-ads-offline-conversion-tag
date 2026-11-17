@@ -42,7 +42,27 @@ ___TEMPLATE_PARAMETERS___
       {
         "type": "NON_EMPTY"
       }
-    ]
+    ],
+    "help": "Name of the offline conversion goal in Microsoft Advertising. It must match an existing goal name exactly, otherwise the conversion is not applied.\u003cbr/\u003e\u003cbr/\u003eWait 2 hours after creating the goal before sending conversions."
+  },
+  {
+    "type": "SELECT",
+    "name": "useOptimisticScenario",
+    "displayName": "Use Optimistic Scenario",
+    "macrosInSelect": true,
+    "selectItems": [
+      {
+        "value": true,
+        "displayValue": "true"
+      },
+      {
+        "value": false,
+        "displayValue": "false"
+      }
+    ],
+    "simpleValueType": true,
+    "help": "The tag will call gtmOnSuccess() without waiting for a response from the API. This will speed up sGTM response time however your tag will always return the status fired successfully even in case it is not.",
+    "defaultValue": false
   },
   {
     "type": "GROUP",
@@ -58,7 +78,7 @@ ___TEMPLATE_PARAMETERS___
           {
             "value": "stape",
             "displayValue": "Stape Microsoft Connection",
-            "help": "Learn how to setup Stape Microsoft Connection \u003ca href\u003d\"https://stape.io/blog/microsoft-ads-bing-offline-conversion-tracking\"\u003ehere\u003c/a\u003e"
+            "help": "Learn how to set up Stape Microsoft Connection \u003ca href\u003d\"https://stape.io/blog/microsoft-ads-bing-offline-conversion-tracking\" target\u003d\"_blank\"\u003ehere\u003c/a\u003e."
           },
           {
             "value": "own",
@@ -122,29 +142,34 @@ ___TEMPLATE_PARAMETERS___
             "paramValue": "own",
             "type": "EQUALS"
           }
-        ]
+        ],
+        "help": "OAuth refresh token. Microsoft issues a new refresh token on every token refresh; the tag stores it in Firestore (see Firebase Settings) and uses the stored one first. If the stored token is rejected, the tag retries with this one, so after re-authorising you only need to update this field."
       },
       {
         "type": "TEXT",
         "name": "customerAccountId",
-        "displayName": "Customer Account Id",
+        "displayName": "Customer Account ID",
         "simpleValueType": true,
         "valueValidators": [
           {
             "type": "NON_EMPTY"
           }
-        ]
+        ],
+        "help": "Numeric ID of the ad account that owns the conversion goal (not the account number). You can find it in the \u003ci\u003eaid\u003c/i\u003e URL parameter when visiting your Microsoft Advertising account.\u003cbr/\u003ee.g. \u003ci\u003ehttps://ui.ads.microsoft.com/[...]?\u003cb\u003eaid\u003d{Customer Account ID}\u003c/b\u003e\u0026cid\u003d[...]\u003c/i\u003e",
+        "valueHint": "123456789"
       },
       {
         "type": "TEXT",
         "name": "customerId",
-        "displayName": "Customer Id",
+        "displayName": "Customer ID",
         "simpleValueType": true,
         "valueValidators": [
           {
             "type": "NON_EMPTY"
           }
-        ]
+        ],
+        "help": "Numeric ID of the manager account (customer). You can find it in the \u003ci\u003ecid\u003c/i\u003e URL parameter when visiting your Microsoft Advertising account.\u003cbr/\u003ee.g. \u003ci\u003ehttps://ui.ads.microsoft.com/[...]\u0026\u003cb\u003ecid\u003d{Customer ID}\u003c/b\u003e\u0026[...]\u003c/i\u003e",
+        "valueHint": "12345678"
       },
       {
         "type": "TEXT",
@@ -199,41 +224,46 @@ ___TEMPLATE_PARAMETERS___
       {
         "type": "TEXT",
         "name": "microsoftClickId",
-        "displayName": "Microsoft Click Id",
+        "displayName": "Microsoft Click ID",
         "simpleValueType": true,
-        "help": "The MSCLKID for the offline conversion."
+        "help": "The MSCLKID of the ad click. Accepts the bare MSCLKID or the raw value of the \u003ci\u003e_uetmsclkid\u003c/i\u003e cookie (the tag removes its \u003ci\u003e_uet\u003c/i\u003e prefix).\u003cbr/\u003e\u003cbr/\u003eOptional when Email or Phone is set. If Microsoft Click ID, Email and Phone are all empty, the tag sends nothing."
       },
       {
         "type": "TEXT",
         "name": "conversionCurrencyCode",
         "displayName": "Currency Code",
         "simpleValueType": true,
-        "defaultValue": "USD"
+        "defaultValue": "USD",
+        "help": "ISO 4217 currency code, e.g. USD.\u003cbr/\u003e\u003cbr/\u003eIf empty, the \u003ci\u003ecurrencyCode\u003c/i\u003e or \u003ci\u003ecurrency\u003c/i\u003e event data parameter is used, and if that is missing too, the goal\u0027s default currency. Clear the default value to use the event\u0027s currency."
       },
       {
         "type": "TEXT",
         "name": "conversionTime",
         "displayName": "Conversion Time",
         "simpleValueType": true,
-        "help": "The date and time when the offline conversion occurred.\u003cbr\u003e\u003cbr\u003e\nExample: 2020-04-30T17:02:35.6853793Z"
+        "help": "Date and time of the conversion in UTC, in ISO 8601 format. It must be within the last 90 days and later than the click.\u003cbr/\u003e\u003cbr/\u003eExample: 2020-04-30T17:02:35.685Z\u003cbr/\u003e\u003cbr/\u003eIf empty, the time the tag fires is used."
       },
       {
         "type": "TEXT",
         "name": "conversionValue",
         "displayName": "Conversion Value",
-        "simpleValueType": true
+        "simpleValueType": true,
+        "help": "If empty, the \u003ci\u003evalue\u003c/i\u003e event data parameter is used, and if that is missing too, the goal\u0027s default revenue value."
       },
       {
         "type": "TEXT",
         "name": "externalAttributionCredit",
         "displayName": "External Attribution Credit",
-        "simpleValueType": true
+        "simpleValueType": true,
+        "help": "Only for goals that use external attribution. The fraction of the conversion credited to this click: greater than 0 and up to 1.",
+        "valueHint": "0.5"
       },
       {
         "type": "TEXT",
         "name": "externalAttributionModel",
         "displayName": "External Attribution Model",
-        "simpleValueType": true
+        "simpleValueType": true,
+        "help": "Only for goals that use external attribution. The name of the attribution model."
       }
     ]
   },
@@ -247,13 +277,15 @@ ___TEMPLATE_PARAMETERS___
         "type": "TEXT",
         "name": "hashedEmailAddress",
         "displayName": "Email",
-        "simpleValueType": true
+        "simpleValueType": true,
+        "help": "Plain text or SHA-256 hashed. Plain values are trimmed, lowercased and hashed by the tag."
       },
       {
         "type": "TEXT",
         "name": "hashedPhoneNumber",
         "displayName": "Phone",
-        "simpleValueType": true
+        "simpleValueType": true,
+        "help": "Plain text in E.164 format (e.g. +14155552671) or SHA-256 hashed. Plain values are trimmed, stripped of spaces, dashes and parentheses, and hashed by the tag."
       }
     ]
   },
@@ -267,14 +299,15 @@ ___TEMPLATE_PARAMETERS___
         "type": "TEXT",
         "name": "firebaseProjectId",
         "displayName": "Firebase Project ID",
-        "simpleValueType": true
+        "simpleValueType": true,
+        "help": "Optional. If empty, the project from the server container\u0027s \u003ci\u003eGOOGLE_CLOUD_PROJECT\u003c/i\u003e environment variable is used."
       },
       {
         "type": "TEXT",
         "name": "firebasePath",
         "displayName": "Firebase Path",
         "simpleValueType": true,
-        "help": "The tag uses Firebase to store the OAuth access token. You can choose any key for a document that will store the OAuth access token.",
+        "help": "Path of the Firestore document where the tag stores the OAuth access and refresh tokens. Any path works; use a different one for each set of credentials.",
         "valueValidators": [
           {
             "type": "NON_EMPTY"
@@ -325,12 +358,12 @@ ___SANDBOXED_JS_FOR_SERVER___
 const encodeUriComponent = require('encodeUriComponent');
 const Firestore = require('Firestore');
 const getAllEventData = require('getAllEventData');
+const getRequestHeader = require('getRequestHeader');
 const getTimestampMillis = require('getTimestampMillis');
 const getType = require('getType');
 const JSON = require('JSON');
 const makeString = require('makeString');
 const Math = require('Math');
-const Object = require('Object');
 const sendHttpRequest = require('sendHttpRequest');
 const sha256Sync = require('sha256Sync');
 
@@ -338,43 +371,46 @@ const sha256Sync = require('sha256Sync');
 ==============================================================================*/
 
 const eventData = getAllEventData();
+const useOptimisticScenario = isUIFieldTrue(data.useOptimisticScenario);
 
-if (!isConsentGivenOrNotRequired(data, eventData)) {
+if (shouldExitEarly(data, eventData)) {
+  return data.gtmOnSuccess();
+}
+
+if (!hasConversionIdentifier(data)) {
   return data.gtmOnSuccess();
 }
 
 const firebaseOptions = {};
-
-if (!data.microsoftClickId && !data.hashedEmailAddress && !data.hashedPhoneNumber) {
-  return data.gtmOnSuccess();
-}
+if (data.firebaseProjectId) firebaseOptions.projectId = data.firebaseProjectId;
 
 if (data.authFlow === 'stape') {
-  return sendConversionRequest(
+  sendConversionRequest(
     getData('StapeAccessToken', 'StapeDeveloperToken'),
     handleStapeResponse
   );
+} else {
+  Firestore.read(data.firebasePath, firebaseOptions).then(
+    (result) =>
+      sendConversionRequest(
+        getData(result.data.access_token, data.developerToken),
+        getHandleResponse(result.data.refresh_token, false)
+      ),
+    () => updateAccessToken(data.refreshToken)
+  );
 }
 
-if (data.firebaseProjectId) firebaseOptions.projectId = data.firebaseProjectId;
-
-Firestore.read(data.firebasePath, firebaseOptions).then(
-  (result) => {
-    const postBody = getData(result.data.access_token, data.developerToken);
-
-    return sendConversionRequest(postBody, getHandleResponse(result.data.refresh_token));
-  },
-  () => updateAccessToken(data.refreshToken)
-);
+if (useOptimisticScenario) {
+  return data.gtmOnSuccess();
+}
 
 /*==============================================================================
 Vendor related functions
 ==============================================================================*/
 
 function sendConversionRequest(postBody, responseCallback) {
-  const postUrl = getUrl();
   sendHttpRequest(
-    postUrl,
+    getRequestUrl(),
     (statusCode, headers, body) => {
       responseCallback(statusCode, headers, body);
     },
@@ -384,27 +420,36 @@ function sendConversionRequest(postBody, responseCallback) {
 }
 
 function handleStapeResponse(statusCode, headers, body) {
-  if (statusCode >= 200 && statusCode < 400) {
-    data.gtmOnSuccess();
-  } else {
-    data.gtmOnFailure();
-  }
+  finishTag(isSuccessfulResponse(statusCode, body));
 }
 
-function getHandleResponse(refreshToken) {
+function getHandleResponse(refreshToken, isRetryWithFreshToken) {
   return (statusCode, headers, body) => {
-    if (statusCode >= 200 && statusCode < 400) {
-      if (body.indexOf('Authentication token expired') !== -1) {
-        updateAccessToken(refreshToken);
-      } else {
-        data.gtmOnSuccess();
-      }
-    } else if (statusCode === 401) {
-      updateAccessToken(refreshToken);
-    } else {
-      data.gtmOnFailure();
+    if (!isRetryWithFreshToken && isAuthenticationError(statusCode, body)) {
+      return updateAccessToken(refreshToken);
     }
+
+    finishTag(isSuccessfulResponse(statusCode, body));
   };
+}
+
+function isAuthenticationError(statusCode, body) {
+  if (statusCode === 401) return true;
+
+  const responseBody = makeString(body || '');
+  return [
+    'AuthenticationTokenExpired',
+    'Authentication token expired',
+    'InvalidCredentials'
+  ].some((authErrorMarker) => responseBody.indexOf(authErrorMarker) !== -1);
+}
+
+function isSuccessfulResponse(statusCode, body) {
+  if (statusCode < 200 || statusCode >= 400) return false;
+
+  // The API answers some errors with HTTP 200: a SOAP fault, or a BatchError in PartialErrors.
+  const responseBody = makeString(body || '');
+  return responseBody.indexOf(':Fault>') === -1 && responseBody.indexOf('<BatchError') === -1;
 }
 
 function getConversionRequestHeaders() {
@@ -414,11 +459,25 @@ function getConversionRequestHeaders() {
   };
 }
 
-function updateAccessToken(refreshToken) {
+function updateAccessToken(storedRefreshToken) {
+  // The refresh token stored in Firestore goes stale when the user re-authorises and pastes a new
+  // one in the UI, so the UI token is tried when the stored one fails.
+  const refreshTokens = [];
+  if (storedRefreshToken) refreshTokens.push(storedRefreshToken);
+  if (data.refreshToken && refreshTokens.indexOf(data.refreshToken) === -1) {
+    refreshTokens.push(data.refreshToken);
+  }
+
+  requestAccessToken(refreshTokens);
+}
+
+function requestAccessToken(refreshTokens) {
+  if (refreshTokens.length === 0) return finishTag(false);
+
   const authUrl = 'https://login.microsoftonline.com/common/oauth2/v2.0/token/';
   const authBody =
     'refresh_token=' +
-    enc(refreshToken || data.refreshToken) +
+    enc(refreshTokens[0]) +
     '&client_id=' +
     enc(data.clientId) +
     '&client_secret=' +
@@ -428,18 +487,20 @@ function updateAccessToken(refreshToken) {
   sendHttpRequest(
     authUrl,
     (statusCode, headers, body) => {
-      if (statusCode >= 200 && statusCode < 400) {
-        let bodyParsed = JSON.parse(body);
-
-        Firestore.write(data.firebasePath, bodyParsed, firebaseOptions).then(() => {
-          sendConversionRequest(
-            getData(bodyParsed.access_token, data.developerToken),
-            getHandleResponse(bodyParsed.refresh_token)
-          );
-        }, data.gtmOnFailure);
-      } else {
-        data.gtmOnFailure();
+      const tokens = safeJsonParse(body);
+      if (statusCode < 200 || statusCode >= 400 || !tokens || !tokens.access_token) {
+        return requestAccessToken(refreshTokens.slice(1));
       }
+
+      Firestore.write(data.firebasePath, tokens, firebaseOptions).then(
+        () => {
+          sendConversionRequest(
+            getData(tokens.access_token, data.developerToken),
+            getHandleResponse(tokens.refresh_token, true)
+          );
+        },
+        () => finishTag(false)
+      );
     },
     {
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -449,7 +510,7 @@ function updateAccessToken(refreshToken) {
   );
 }
 
-function getUrl() {
+function getRequestUrl() {
   if (data.authFlow === 'own') {
     const apiVersion = '13';
 
@@ -479,21 +540,32 @@ function getUrl() {
   );
 }
 
+function getMicrosoftClickId(clickId) {
+  if (!clickId) return clickId;
+
+  // The UET _uetmsclkid cookie stores the click ID as "_uet" + MSCLKID.
+  const cookiePrefix = '_uet';
+  const value = makeString(clickId).trim();
+  return value.indexOf(cookiePrefix) === 0 ? value.substring(cookiePrefix.length) : value;
+}
+
+function hasConversionIdentifier(data) {
+  return !!(
+    getMicrosoftClickId(data.microsoftClickId) ||
+    hashData('hashedEmailAddress', data.hashedEmailAddress) ||
+    hashData('hashedPhoneNumber', data.hashedPhoneNumber)
+  );
+}
+
 function getData(accessToken, developerToken) {
-  const eventData = getAllEventData();
-
-  const email = data.hashedEmailAddress;
-  const phone = data.hashedPhoneNumber;
+  const email = hashData('hashedEmailAddress', data.hashedEmailAddress);
+  const phone = hashData('hashedPhoneNumber', data.hashedPhoneNumber);
   const value = data.conversionValue || eventData.value;
-
-  let conversionCurrencyCode = '';
-  if (data.conversionCurrencyCode) conversionCurrencyCode = data.conversionCurrencyCode;
-  else if (eventData.currencyCode) conversionCurrencyCode = eventData.currencyCode;
-  else if (eventData.currency) conversionCurrencyCode = eventData.currency;
-
-  let externalAttributionCredit = data.externalAttributionCredit;
-  let externalAttributionModel = data.externalAttributionModel;
-  let microsoftClickId = data.microsoftClickId;
+  const conversionCurrencyCode =
+    data.conversionCurrencyCode || eventData.currencyCode || eventData.currency || '';
+  const externalAttributionCredit = data.externalAttributionCredit;
+  const externalAttributionModel = data.externalAttributionModel;
+  const microsoftClickId = getMicrosoftClickId(data.microsoftClickId);
 
   // prettier-ignore
   return '' +
@@ -515,8 +587,8 @@ function getData(accessToken, developerToken) {
                          (value ? '<ConversionValue i:nil="false">'+value+'</ConversionValue>\n' : '') +
                          (externalAttributionCredit ? '<ExternalAttributionCredit i:nil="false">'+externalAttributionCredit+'</ExternalAttributionCredit>\n' : '') +
                          (externalAttributionModel ? '<ExternalAttributionModel i:nil="false">'+externalAttributionModel+'</ExternalAttributionModel>\n' : '') +
-                         (email ? '<HashedEmailAddress i:nil="false">'+hashData('hashedEmailAddress', email)+'</HashedEmailAddress>\n' : '') +
-                         (phone ? '<HashedPhoneNumber i:nil="false">'+hashData('hashedPhoneNumber', phone)+'</HashedPhoneNumber>\n' : '') +
+                         (email ? '<HashedEmailAddress i:nil="false">'+email+'</HashedEmailAddress>\n' : '') +
+                         (phone ? '<HashedPhoneNumber i:nil="false">'+phone+'</HashedPhoneNumber>\n' : '') +
                          (microsoftClickId ? '<MicrosoftClickId i:nil="false">'+microsoftClickId+'</MicrosoftClickId>\n' : '') +
     '                </OfflineConversion>\n' +
     '            </OfflineConversions>\n' +
@@ -529,11 +601,53 @@ function getData(accessToken, developerToken) {
 Helpers
 ==============================================================================*/
 
+function shouldExitEarly(data, eventData) {
+  if (!isConsentGivenOrNotRequired(data, eventData)) return true;
+
+  const url = getUrl(eventData);
+  if (url && url.lastIndexOf('https://gtm-msr.appspot.com/', 0) === 0) return true;
+
+  return false;
+}
+
+function getUrl(eventData) {
+  return eventData.page_location || getRequestHeader('referer') || eventData.page_referrer;
+}
+
 function isConsentGivenOrNotRequired(data, eventData) {
   if (data.adStorageConsent !== 'required') return true;
   if (eventData.consent_state) return !!eventData.consent_state.ad_storage;
   const xGaGcs = eventData['x-ga-gcs'] || ''; // x-ga-gcs is a string like "G110"
   return xGaGcs[2] === '1';
+}
+
+function finishTag(isSuccess) {
+  if (useOptimisticScenario) return;
+  if (isSuccess) data.gtmOnSuccess();
+  else data.gtmOnFailure();
+}
+
+function isUIFieldTrue(field) {
+  return [true, 'true'].indexOf(field) !== -1;
+}
+
+function isValidValue(value) {
+  const valueType = getType(value);
+  if (valueType === 'null' || valueType === 'undefined' || value !== value) return false;
+  return value !== '' && value !== 'undefined' && value !== 'null';
+}
+
+function safeJsonParse(body) {
+  if (getType(body) !== 'string') return undefined;
+
+  const trimmedBody = body.trim();
+  const firstChar = trimmedBody.charAt(0);
+  const lastChar = trimmedBody.charAt(trimmedBody.length - 1);
+  const looksLikeJson =
+    (firstChar === '{' && lastChar === '}') || (firstChar === '[' && lastChar === ']');
+  if (!looksLikeJson) return undefined;
+
+  return JSON.parse(trimmedBody);
 }
 
 function enc(data) {
@@ -554,30 +668,11 @@ function isHashed(value) {
 }
 
 function hashData(key, value) {
-  if (!value) {
-    return value;
-  }
+  // The API takes a single email and phone per conversion: use the first valid item of an array.
+  if (getType(value) === 'array') value = value.filter(isValidValue)[0];
+  if (!isValidValue(value) || getType(value) === 'object') return undefined;
 
-  const type = getType(value);
-
-  if (type === 'undefined' || value === 'undefined') {
-    return undefined;
-  }
-
-  if (type === 'array') {
-    return value.map((val) => hashData(val));
-  }
-
-  if (type === 'object') {
-    return Object.keys(value).reduce((acc, val) => {
-      acc[val] = hashData(value[val]);
-      return acc;
-    }, {});
-  }
-
-  if (isHashed(value)) {
-    return value;
-  }
+  if (isHashed(value)) return makeString(value);
 
   value = makeString(value).trim().toLowerCase();
 
@@ -585,75 +680,58 @@ function hashData(key, value) {
     value = value.split(' ').join('').split('-').join('').split('(').join('').split(')').join('');
   }
 
+  if (!value) return undefined;
+
   return sha256Sync(value, { outputEncoding: 'hex' });
 }
 
 function convertTimestampToISO(timestamp) {
-  const secToMs = function (s) {
-    return s * 1000;
+  const msPerDay = 86400000;
+  const isLeapYear = (y) => (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0;
+  const pad = (value, length) => {
+    let result = makeString(value);
+    while (result.length < length) result = '0' + result;
+    return result;
   };
-  const minToMs = function (m) {
-    return m * secToMs(60);
-  };
-  const hoursToMs = function (h) {
-    return h * minToMs(60);
-  };
-  const daysToMs = function (d) {
-    return d * hoursToMs(24);
-  };
-  const format = function (value) {
-    return value >= 10 ? value.toString() : '0' + value;
-  };
-  const fourYearsInMs = daysToMs(365 * 4 + 1);
-  let year = 1970 + Math.floor(timestamp / fourYearsInMs) * 4;
-  timestamp = timestamp % fourYearsInMs;
 
-  while (true) {
-    let isLeapYear = !(year % 4);
-    let nextTimestamp = timestamp - daysToMs(isLeapYear ? 366 : 365);
-    if (nextTimestamp < 0) {
-      break;
-    }
-    timestamp = nextTimestamp;
-    year = year + 1;
+  let days = Math.floor(timestamp / msPerDay);
+  let msOfDay = timestamp - days * msPerDay;
+
+  let year = 1970;
+  while (days >= (isLeapYear(year) ? 366 : 365)) {
+    days = days - (isLeapYear(year) ? 366 : 365);
+    year++;
   }
 
-  const daysByMonth =
-    year % 4 === 0
-      ? [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
-      : [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
-
+  const daysInMonth = [31, isLeapYear(year) ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
   let month = 0;
-  for (let i = 0; i < daysByMonth.length; i++) {
-    let msInThisMonth = daysToMs(daysByMonth[i]);
-    if (timestamp > msInThisMonth) {
-      timestamp = timestamp - msInThisMonth;
-    } else {
-      month = i + 1;
-      break;
-    }
+  while (days >= daysInMonth[month]) {
+    days = days - daysInMonth[month];
+    month++;
   }
-  let date = Math.ceil(timestamp / daysToMs(1));
-  timestamp = timestamp - daysToMs(date - 1);
-  let hours = Math.floor(timestamp / hoursToMs(1));
-  timestamp = timestamp - hoursToMs(hours);
-  let minutes = Math.floor(timestamp / minToMs(1));
-  timestamp = timestamp - minToMs(minutes);
-  let sec = Math.floor(timestamp / secToMs(1));
+
+  const hours = Math.floor(msOfDay / 3600000);
+  msOfDay = msOfDay - hours * 3600000;
+  const minutes = Math.floor(msOfDay / 60000);
+  msOfDay = msOfDay - minutes * 60000;
+  const seconds = Math.floor(msOfDay / 1000);
+  const milliseconds = msOfDay - seconds * 1000;
 
   return (
     year +
     '-' +
-    format(month) +
+    pad(month + 1, 2) +
     '-' +
-    format(date) +
+    pad(days + 1, 2) +
     'T' +
-    format(hours) +
+    pad(hours, 2) +
     ':' +
-    format(minutes) +
+    pad(minutes, 2) +
     ':' +
-    format(sec) +
-    '.1111111Z'
+    pad(seconds, 2) +
+    '.' +
+    pad(milliseconds, 3) +
+    'Z'
   );
 }
 
@@ -661,6 +739,71 @@ function convertTimestampToISO(timestamp) {
 ___SERVER_PERMISSIONS___
 
 [
+  {
+    "instance": {
+      "key": {
+        "publicId": "read_request",
+        "versionId": "1"
+      },
+      "param": [
+        {
+          "key": "headerWhitelist",
+          "value": {
+            "type": 2,
+            "listItem": [
+              {
+                "type": 3,
+                "mapKey": [
+                  {
+                    "type": 1,
+                    "string": "headerName"
+                  }
+                ],
+                "mapValue": [
+                  {
+                    "type": 1,
+                    "string": "referer"
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "key": "headersAllowed",
+          "value": {
+            "type": 8,
+            "boolean": true
+          }
+        },
+        {
+          "key": "requestAccess",
+          "value": {
+            "type": 1,
+            "string": "specific"
+          }
+        },
+        {
+          "key": "headerAccess",
+          "value": {
+            "type": 1,
+            "string": "specific"
+          }
+        },
+        {
+          "key": "queryParameterAccess",
+          "value": {
+            "type": 1,
+            "string": "any"
+          }
+        }
+      ]
+    },
+    "clientAnnotations": {
+      "isEditedByUser": true
+    },
+    "isRequired": true
+  },
   {
     "instance": {
       "key": {
@@ -793,11 +936,659 @@ ___SERVER_PERMISSIONS___
 
 ___TESTS___
 
-scenarios: []
-setup: ''
+scenarios:
+- name: '[Own Credentials] Sends SOAP request with stored token and all conversion fields'
+  code: |-
+    const firestore = mockFirestore(STORED_TOKENS);
+    const requests = mockHttp([{ statusCode: 200, body: SUCCESS_BODY }], []);
+
+    const mockData = createMockData({
+      firebaseProjectId: 'my-firebase-project',
+      conversionTime: '2025-11-10T10:00:00.000Z',
+      conversionValue: '149.9',
+      externalAttributionCredit: '0.5',
+      externalAttributionModel: 'Data driven',
+      hashedEmailAddress: ' Foo@Example.COM ',
+      hashedPhoneNumber: '+1 (415) 555-2671'
+    });
+
+    runCode(mockData);
+
+    assertThat(firestore.reads).isEqualTo([
+      { path: 'stape/microsoft-ads-offline-auth', options: { projectId: 'my-firebase-project' } }
+    ]);
+    assertThat(firestore.writes).hasLength(0);
+    assertThat(requests).hasLength(1);
+
+    const request = requests[0];
+    assertThat(request.url).isEqualTo(API_URL);
+    assertThat(request.options).isEqualTo({
+      headers: { 'Content-Type': 'text/xml; charset=utf-8', SOAPAction: 'ApplyOfflineConversions' },
+      method: 'POST'
+    });
+    assertThat(request.body).contains(
+      '<AuthenticationToken i:nil="false">stored-access-token</AuthenticationToken>',
+      '<CustomerAccountId i:nil="false">123456789</CustomerAccountId>',
+      '<CustomerId i:nil="false">12345678</CustomerId>',
+      '<DeveloperToken i:nil="false">dev-token</DeveloperToken>',
+      '<ConversionCurrencyCode i:nil="false">USD</ConversionCurrencyCode>',
+      '<ConversionName i:nil="false">Offline Purchase</ConversionName>',
+      '<ConversionTime>2025-11-10T10:00:00.000Z</ConversionTime>',
+      '<ConversionValue i:nil="false">149.9</ConversionValue>',
+      '<ExternalAttributionCredit i:nil="false">0.5</ExternalAttributionCredit>',
+      '<ExternalAttributionModel i:nil="false">Data driven</ExternalAttributionModel>',
+      '<HashedEmailAddress i:nil="false">' + hash('foo@example.com') + '</HashedEmailAddress>',
+      '<HashedPhoneNumber i:nil="false">' + hash('+14155552671') + '</HashedPhoneNumber>',
+      '<MicrosoftClickId i:nil="false">' + CLICK_ID + '</MicrosoftClickId>'
+    );
+
+    assertApi('gtmOnSuccess').wasCalled();
+    assertApi('gtmOnFailure').wasNotCalled();
+- name: '[Own Credentials] Omits optional fields and uses event data fallbacks'
+  code: |-
+    mockFirestore(STORED_TOKENS);
+
+    [
+      {
+        description: 'currencyCode wins over currency',
+        eventData: { value: 99.5, currencyCode: 'EUR', currency: 'GBP' },
+        expectedValue: '<ConversionValue i:nil="false">99.5</ConversionValue>',
+        expectedCurrency: 'EUR'
+      },
+      {
+        description: 'currency is used when currencyCode is missing',
+        eventData: { currency: 'GBP' },
+        expectedValue: undefined,
+        expectedCurrency: 'GBP'
+      },
+      {
+        description: 'currency is empty when nothing is set',
+        eventData: {},
+        expectedValue: undefined,
+        expectedCurrency: ''
+      }
+    ].forEach((scenario) => {
+      mock('getAllEventData', () => scenario.eventData);
+      const requests = mockHttp([{ statusCode: 200, body: SUCCESS_BODY }], []);
+
+      const mockData = createMockData({});
+      Object.delete(mockData, 'conversionCurrencyCode');
+
+      runCode(mockData);
+
+      const body = requests[0].body;
+      assertThat(body).contains(
+        '<ConversionCurrencyCode i:nil="false">' + scenario.expectedCurrency + '</ConversionCurrencyCode>',
+        '<ConversionTime>2025-11-17T00:00:00.000Z</ConversionTime>'
+      );
+      if (scenario.expectedValue) assertThat(body).contains(scenario.expectedValue);
+      else assertThat(body).doesNotContain('<ConversionValue');
+      assertThat(body).doesNotContain(
+        '<ExternalAttributionCredit',
+        '<ExternalAttributionModel',
+        '<HashedEmailAddress',
+        '<HashedPhoneNumber'
+      );
+    });
+
+    assertApi('gtmOnSuccess').wasCalled();
+    assertApi('gtmOnFailure').wasNotCalled();
+- name: '[Conversion Time] Formats the current time as ISO 8601 at midnight, leap days and century years'
+  code: |-
+    mockFirestore(STORED_TOKENS);
+
+    [
+      { timestamp: 1763337600000, expected: '2025-11-17T00:00:00.000Z' },
+      { timestamp: 1738281600000, expected: '2025-01-31T00:00:00.000Z' },
+      { timestamp: 951782400000, expected: '2000-02-29T00:00:00.000Z' },
+      { timestamp: 1709251199999, expected: '2024-02-29T23:59:59.999Z' },
+      { timestamp: 4107585600000, expected: '2100-03-01T12:00:00.000Z' }
+    ].forEach((scenario) => {
+      mock('getTimestampMillis', () => scenario.timestamp);
+      const requests = mockHttp([{ statusCode: 200, body: SUCCESS_BODY }], []);
+
+      runCode(createMockData({}));
+
+      assertThat(requests[0].body).contains('<ConversionTime>' + scenario.expected + '</ConversionTime>');
+    });
+
+    assertApi('gtmOnSuccess').wasCalled();
+    assertApi('gtmOnFailure').wasNotCalled();
+- name: '[Click ID] Removes only the _uet cookie prefix'
+  code: |-
+    mockFirestore(STORED_TOKENS);
+
+    [
+      { input: '_uet' + CLICK_ID, expected: CLICK_ID },
+      { input: CLICK_ID, expected: CLICK_ID },
+      { input: 'bebd46f3a93311ecb4d864525e977793', expected: 'bebd46f3a93311ecb4d864525e977793' },
+      { input: ' _uetbebd46f3a93311ecb4d864525e977793 ', expected: 'bebd46f3a93311ecb4d864525e977793' }
+    ].forEach((scenario) => {
+      const requests = mockHttp([{ statusCode: 200, body: SUCCESS_BODY }], []);
+
+      runCode(createMockData({ microsoftClickId: scenario.input }));
+
+      assertThat(requests[0].body).contains(
+        '<MicrosoftClickId i:nil="false">' + scenario.expected + '</MicrosoftClickId>'
+      );
+    });
+
+    assertApi('gtmOnSuccess').wasCalled();
+    assertApi('gtmOnFailure').wasNotCalled();
+- name: '[User Data] Normalizes and hashes email and phone, keeps hashed values and uses first array item'
+  code: |-
+    mockFirestore(STORED_TOKENS);
+    const hashedValue = hash('already-hashed');
+
+    [
+      {
+        email: 'USER@example.com',
+        phone: '415-555 2671',
+        expectedEmail: hash('user@example.com'),
+        expectedPhone: hash('4155552671')
+      },
+      {
+        email: hashedValue,
+        phone: hashedValue,
+        expectedEmail: hashedValue,
+        expectedPhone: hashedValue
+      },
+      {
+        email: ['', 'Second@Example.com', 'third@example.com'],
+        phone: [undefined, '+1 (415) 555-2671'],
+        expectedEmail: hash('second@example.com'),
+        expectedPhone: hash('+14155552671')
+      }
+    ].forEach((scenario) => {
+      const requests = mockHttp([{ statusCode: 200, body: SUCCESS_BODY }], []);
+
+      runCode(
+        createMockData({
+          microsoftClickId: '',
+          hashedEmailAddress: scenario.email,
+          hashedPhoneNumber: scenario.phone
+        })
+      );
+
+      assertThat(requests[0].body).contains(
+        '<HashedEmailAddress i:nil="false">' + scenario.expectedEmail + '</HashedEmailAddress>',
+        '<HashedPhoneNumber i:nil="false">' + scenario.expectedPhone + '</HashedPhoneNumber>'
+      );
+      assertThat(requests[0].body).doesNotContain('<MicrosoftClickId');
+    });
+
+    assertApi('gtmOnSuccess').wasCalled();
+    assertApi('gtmOnFailure').wasNotCalled();
+- name: '[Early Exit] Sends nothing when there is no click ID, email or phone'
+  code: |-
+    [
+      { microsoftClickId: '' },
+      { microsoftClickId: '_uet' },
+      { microsoftClickId: '', hashedEmailAddress: '   ', hashedPhoneNumber: [] },
+      { microsoftClickId: '', hashedEmailAddress: { email: 'foo@example.com' } },
+      { microsoftClickId: '', hashedEmailAddress: 'undefined', hashedPhoneNumber: ['', null] }
+    ].forEach((overrides) => {
+      const firestore = mockFirestore(STORED_TOKENS);
+
+      runCode(createMockData(overrides));
+
+      assertThat(firestore.reads).hasLength(0);
+    });
+
+    assertApi('sendHttpRequest').wasNotCalled();
+    assertApi('gtmOnSuccess').wasCalled();
+    assertApi('gtmOnFailure').wasNotCalled();
+- name: '[Early Exit] Sends nothing when ad storage consent is required and denied'
+  code: |-
+    [
+      { consent_state: { ad_storage: false } },
+      { 'x-ga-gcs': 'G100' },
+      { 'x-ga-gcs': 'G101' },
+      {}
+    ].forEach((eventData) => {
+      mock('getAllEventData', () => eventData);
+      const firestore = mockFirestore(STORED_TOKENS);
+
+      runCode(createMockData({ adStorageConsent: 'required' }));
+
+      assertThat(firestore.reads).hasLength(0);
+    });
+
+    assertApi('sendHttpRequest').wasNotCalled();
+    assertApi('gtmOnSuccess').wasCalled();
+    assertApi('gtmOnFailure').wasNotCalled();
+- name: '[Consent] Sends when ad storage consent is required and granted'
+  code: |-
+    mockFirestore(STORED_TOKENS);
+    let requestCount = 0;
+
+    [{ consent_state: { ad_storage: true } }, { 'x-ga-gcs': 'G110' }].forEach((eventData) => {
+      mock('getAllEventData', () => eventData);
+      const requests = mockHttp([{ statusCode: 200, body: SUCCESS_BODY }], []);
+
+      runCode(createMockData({ adStorageConsent: 'required' }));
+
+      requestCount += requests.length;
+    });
+
+    assertThat(requestCount).isEqualTo(2);
+    assertApi('gtmOnSuccess').wasCalled();
+    assertApi('gtmOnFailure').wasNotCalled();
+- name: '[Early Exit] Skips requests coming from the gtm-msr Measurement Protocol renderer'
+  code: |-
+    const msrUrl = 'https://gtm-msr.appspot.com/render?id=GTM-XXXX';
+
+    [
+      { eventData: { page_location: msrUrl }, referer: undefined },
+      { eventData: {}, referer: msrUrl },
+      { eventData: { page_referrer: msrUrl }, referer: undefined }
+    ].forEach((scenario) => {
+      mock('getAllEventData', () => scenario.eventData);
+      mock('getRequestHeader', (headerName) => {
+        if (headerName === 'referer') return scenario.referer;
+      });
+      const firestore = mockFirestore(STORED_TOKENS);
+
+      runCode(createMockData({}));
+
+      assertThat(firestore.reads).hasLength(0);
+    });
+
+    assertApi('sendHttpRequest').wasNotCalled();
+    assertApi('gtmOnSuccess').wasCalled();
+    assertApi('gtmOnFailure').wasNotCalled();
+- name: '[Auth] Requests a token when none is stored, saves it and sends the conversion'
+  code: |-
+    const firestore = mockFirestore(undefined);
+    const requests = mockHttp(
+      [{ statusCode: 200, body: SUCCESS_BODY }],
+      [{ statusCode: 200, body: TOKEN_RESPONSE }]
+    );
+
+    runCode(createMockData({ firebaseProjectId: 'my-firebase-project' }));
+
+    assertThat(requests).hasLength(2);
+
+    assertThat(requests[0].url).isEqualTo(AUTH_URL);
+    assertThat(requests[0].options).isEqualTo({
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      method: 'POST'
+    });
+    assertThat(requests[0].body).isEqualTo(
+      'refresh_token=ui-refresh-token&client_id=client-id&client_secret=client%2Fsecret&grant_type=refresh_token&scope=https%3A%2F%2Fads.microsoft.com%2Fmsads.manage+offline_access&tenant=common'
+    );
+
+    assertThat(firestore.writes).isEqualTo([
+      {
+        path: 'stape/microsoft-ads-offline-auth',
+        input: JSON.parse(TOKEN_RESPONSE),
+        options: { projectId: 'my-firebase-project' }
+      }
+    ]);
+
+    assertThat(requests[1].url).isEqualTo(API_URL);
+    assertThat(requests[1].body).contains(
+      '<AuthenticationToken i:nil="false">new-access-token</AuthenticationToken>'
+    );
+
+    assertApi('gtmOnSuccess').wasCalled();
+    assertApi('gtmOnFailure').wasNotCalled();
+- name: '[Auth] Refreshes the token once on auth errors and retries with the new token'
+  code: |-
+    [
+      { statusCode: 401, body: '' },
+      { statusCode: 200, body: FAULT_INVALID_CREDENTIALS },
+      { statusCode: 500, body: FAULT_TOKEN_EXPIRED },
+      { statusCode: 200, body: 'Authentication token expired. Please renew it or obtain a new authentication token.' }
+    ].forEach((authErrorResponse) => {
+      const firestore = mockFirestore(STORED_TOKENS);
+      const requests = mockHttp(
+        [authErrorResponse, { statusCode: 200, body: SUCCESS_BODY }],
+        [{ statusCode: 200, body: TOKEN_RESPONSE }]
+      );
+
+      runCode(createMockData({}));
+
+      assertThat(requests.map((request) => request.url)).isEqualTo([API_URL, AUTH_URL, API_URL]);
+      assertThat(requests[1].body).contains('refresh_token=stored-refresh-token&');
+      assertThat(requests[2].body).contains(
+        '<AuthenticationToken i:nil="false">new-access-token</AuthenticationToken>'
+      );
+      assertThat(firestore.writes).hasLength(1);
+    });
+
+    assertApi('gtmOnSuccess').wasCalled();
+    assertApi('gtmOnFailure').wasNotCalled();
+- name: '[Auth] Fails without refreshing again when the new token is also rejected'
+  code: |-
+    mockFirestore(STORED_TOKENS);
+    const requests = mockHttp(
+      [
+        { statusCode: 200, body: FAULT_INVALID_CREDENTIALS },
+        { statusCode: 200, body: FAULT_INVALID_CREDENTIALS },
+        { statusCode: 200, body: FAULT_INVALID_CREDENTIALS }
+      ],
+      [
+        { statusCode: 200, body: TOKEN_RESPONSE },
+        { statusCode: 200, body: TOKEN_RESPONSE }
+      ]
+    );
+
+    runCode(createMockData({}));
+
+    assertThat(requests.map((request) => request.url)).isEqualTo([API_URL, AUTH_URL, API_URL]);
+    assertApi('gtmOnSuccess').wasNotCalled();
+    assertApi('gtmOnFailure').wasCalled();
+- name: '[Auth] Falls back to the UI refresh token when the stored one is rejected'
+  code: |-
+    const firestore = mockFirestore(STORED_TOKENS);
+    const requests = mockHttp(
+      [
+        { statusCode: 200, body: FAULT_INVALID_CREDENTIALS },
+        { statusCode: 200, body: SUCCESS_BODY }
+      ],
+      [
+        { statusCode: 400, body: '{"error":"invalid_grant"}' },
+        { statusCode: 200, body: TOKEN_RESPONSE }
+      ]
+    );
+
+    runCode(createMockData({}));
+
+    assertThat(requests.map((request) => request.url)).isEqualTo([API_URL, AUTH_URL, AUTH_URL, API_URL]);
+    assertThat(requests[1].body).contains('refresh_token=stored-refresh-token&');
+    assertThat(requests[2].body).contains('refresh_token=ui-refresh-token&');
+    assertThat(firestore.writes).hasLength(1);
+    assertApi('gtmOnSuccess').wasCalled();
+    assertApi('gtmOnFailure').wasNotCalled();
+- name: '[Auth] Fails when every refresh token is rejected, trying each distinct token once'
+  code: |-
+    [
+      { uiRefreshToken: 'ui-refresh-token', expectedAuthRequests: 2 },
+      { uiRefreshToken: 'stored-refresh-token', expectedAuthRequests: 1 }
+    ].forEach((scenario) => {
+      const firestore = mockFirestore(STORED_TOKENS);
+      const requests = mockHttp(
+        [{ statusCode: 200, body: FAULT_INVALID_CREDENTIALS }],
+        [
+          { statusCode: 400, body: '{"error":"invalid_grant"}' },
+          { statusCode: 400, body: '{"error":"invalid_grant"}' }
+        ]
+      );
+
+      runCode(createMockData({ refreshToken: scenario.uiRefreshToken }));
+
+      const authRequests = requests.filter((request) => request.url === AUTH_URL);
+      assertThat(authRequests).hasLength(scenario.expectedAuthRequests);
+      assertThat(requests).hasLength(scenario.expectedAuthRequests + 1);
+      assertThat(firestore.writes).hasLength(0);
+    });
+
+    assertApi('gtmOnSuccess').wasNotCalled();
+    assertApi('gtmOnFailure').wasCalled();
+- name: '[Auth] Fails when the token response has no access token or is not JSON'
+  code: |-
+    [
+      { statusCode: 200, body: '<html>Bad Gateway</html>' },
+      { statusCode: 200, body: '{"token_type":"Bearer"}' },
+      { statusCode: 200, body: undefined },
+      { statusCode: 0, body: undefined }
+    ].forEach((tokenResponse) => {
+      const firestore = mockFirestore(undefined);
+      const requests = mockHttp([], [tokenResponse]);
+
+      runCode(createMockData({}));
+
+      assertThat(requests).hasLength(1);
+      assertThat(requests[0].url).isEqualTo(AUTH_URL);
+      assertThat(firestore.writes).hasLength(0);
+    });
+
+    assertApi('gtmOnSuccess').wasNotCalled();
+    assertApi('gtmOnFailure').wasCalled();
+- name: '[Auth] Fails when the new token cannot be saved to Firestore'
+  code: |-
+    const firestore = mockFirestore(undefined, true);
+    const requests = mockHttp([], [{ statusCode: 200, body: TOKEN_RESPONSE }]);
+
+    runCode(createMockData({}));
+
+    assertThat(requests.map((request) => request.url)).isEqualTo([AUTH_URL]);
+    assertThat(firestore.writes).hasLength(1);
+    assertApi('gtmOnSuccess').wasNotCalled();
+    assertApi('gtmOnFailure').wasCalled();
+- name: '[Response] Fails on batch errors, SOAP faults, error statuses and network errors without refreshing'
+  code: |-
+    [
+      { statusCode: 200, body: BATCH_ERROR_BODY },
+      { statusCode: 200, body: FAULT_OTHER },
+      { statusCode: 500, body: FAULT_OTHER },
+      { statusCode: 400, body: 'Bad Request' },
+      { statusCode: 0, body: undefined }
+    ].forEach((apiResponse) => {
+      mockFirestore(STORED_TOKENS);
+      const requests = mockHttp([apiResponse], []);
+
+      runCode(createMockData({}));
+
+      assertThat(requests.map((request) => request.url)).isEqualTo([API_URL]);
+    });
+
+    assertApi('gtmOnSuccess').wasNotCalled();
+    assertApi('gtmOnFailure').wasCalled();
+- name: '[Response] Succeeds on 2xx responses without errors, including an empty body'
+  code: |-
+    [
+      { statusCode: 200, body: SUCCESS_BODY },
+      { statusCode: 204, body: undefined }
+    ].forEach((apiResponse) => {
+      mockFirestore(STORED_TOKENS);
+      mockHttp([apiResponse], []);
+
+      runCode(createMockData({}));
+    });
+
+    assertApi('gtmOnSuccess').wasCalled();
+    assertApi('gtmOnFailure').wasNotCalled();
+- name: '[Stape] Sends through the Stape proxy with placeholder credentials and no Firestore'
+  code: |-
+    [
+      {
+        containerKey: 'eu:abcdef:apikey123',
+        expectedUrl: 'https://abcdef.eu.stape.io/stape-api/apikey123/v2/microsoft-ads/auth-proxy'
+      },
+      {
+        containerKey: 'us:ghijkl:apikey456:net',
+        expectedUrl: 'https://ghijkl.us.stape.net/stape-api/apikey456/v2/microsoft-ads/auth-proxy'
+      }
+    ].forEach((scenario) => {
+      const firestore = mockFirestore(STORED_TOKENS);
+      const requests = mockHttp([{ statusCode: 200, body: SUCCESS_BODY }], []);
+
+      runCode(createMockData({ authFlow: 'stape', containerKey: scenario.containerKey }));
+
+      assertThat(firestore.reads).hasLength(0);
+      assertThat(requests).hasLength(1);
+      assertThat(requests[0].url).isEqualTo(scenario.expectedUrl);
+      assertThat(requests[0].body).contains(
+        '<AuthenticationToken i:nil="false">StapeAccessToken</AuthenticationToken>',
+        '<DeveloperToken i:nil="false">StapeDeveloperToken</DeveloperToken>',
+        '<MicrosoftClickId i:nil="false">' + CLICK_ID + '</MicrosoftClickId>'
+      );
+    });
+
+    assertApi('gtmOnSuccess').wasCalled();
+    assertApi('gtmOnFailure').wasNotCalled();
+- name: '[Stape] Fails on error statuses and batch errors'
+  code: |-
+    [
+      { statusCode: 500, body: 'Internal Server Error' },
+      { statusCode: 200, body: BATCH_ERROR_BODY }
+    ].forEach((apiResponse) => {
+      const requests = mockHttp([apiResponse], []);
+
+      runCode(createMockData({ authFlow: 'stape', containerKey: 'eu:abcdef:apikey123' }));
+
+      assertThat(requests).hasLength(1);
+    });
+
+    assertApi('gtmOnSuccess').wasNotCalled();
+    assertApi('gtmOnFailure').wasCalled();
+- name: '[Optimistic] Calls gtmOnSuccess without waiting and ignores failed responses'
+  code: |-
+    [
+      { optimistic: true, authFlow: 'own', storedTokens: STORED_TOKENS },
+      { optimistic: 'true', authFlow: 'own', storedTokens: undefined },
+      { optimistic: true, authFlow: 'stape', storedTokens: STORED_TOKENS }
+    ].forEach((scenario) => {
+      mockFirestore(scenario.storedTokens);
+      mockHttp(
+        [{ statusCode: 500, body: 'Internal Server Error' }],
+        [{ statusCode: 400, body: '{"error":"invalid_grant"}' }]
+      );
+
+      runCode(
+        createMockData({
+          useOptimisticScenario: scenario.optimistic,
+          authFlow: scenario.authFlow,
+          containerKey: 'eu:abcdef:apikey123'
+        })
+      );
+    });
+
+    assertApi('gtmOnSuccess').wasCalled();
+
+    assertApi('sendHttpRequest').wasCalled();
+    assertApi('gtmOnFailure').wasNotCalled();
+setup: |-
+  const JSON = require('JSON');
+  const Object = require('Object');
+  const sha256Sync = require('sha256Sync');
+
+  const API_URL =
+    'https://campaign.api.bingads.microsoft.com/Api/Advertiser/CampaignManagement/V13/CampaignManagementService.svc?singleWsdl';
+  const AUTH_URL = 'https://login.microsoftonline.com/common/oauth2/v2.0/token/';
+  const CLICK_ID = 'fa1b2c3d4e5f60718293a4b5c6d7e8f9';
+
+  const STORED_TOKENS = {
+    access_token: 'stored-access-token',
+    refresh_token: 'stored-refresh-token'
+  };
+  const TOKEN_RESPONSE = JSON.stringify({
+    token_type: 'Bearer',
+    expires_in: 3600,
+    access_token: 'new-access-token',
+    refresh_token: 'new-refresh-token'
+  });
+
+  const SUCCESS_BODY =
+    '<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/"><s:Header><TrackingId>abc</TrackingId></s:Header>' +
+    '<s:Body><ApplyOfflineConversionsResponse xmlns="https://bingads.microsoft.com/CampaignManagement/v13">' +
+    '<PartialErrors xmlns:i="http://www.w3.org/2001/XMLSchema-instance" i:nil="true"/>' +
+    '</ApplyOfflineConversionsResponse></s:Body></s:Envelope>';
+  const BATCH_ERROR_BODY =
+    '<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/"><s:Body>' +
+    '<ApplyOfflineConversionsResponse xmlns="https://bingads.microsoft.com/CampaignManagement/v13"><PartialErrors>' +
+    '<BatchError><Code>5604</Code><ErrorCode>OfflineConversionMicrosoftClickIdInvalid</ErrorCode><Index>0</Index></BatchError>' +
+    '</PartialErrors></ApplyOfflineConversionsResponse></s:Body></s:Envelope>';
+  const buildFault = (code, errorCode, message) =>
+    '<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/"><s:Body><s:Fault>' +
+    '<faultcode>s:Server</faultcode><faultstring>Invalid client data.</faultstring><detail><AdApiFaultDetail><Errors><AdApiError>' +
+    '<Code>' + code + '</Code><ErrorCode>' + errorCode + '</ErrorCode><Message>' + message + '</Message>' +
+    '</AdApiError></Errors></AdApiFaultDetail></detail></s:Fault></s:Body></s:Envelope>';
+  const FAULT_INVALID_CREDENTIALS = buildFault(
+    105,
+    'InvalidCredentials',
+    'Authentication failed. Either supplied credentials are invalid or the account is inactive'
+  );
+  const FAULT_TOKEN_EXPIRED = buildFault(109, 'AuthenticationTokenExpired', 'The token has expired.');
+  const FAULT_OTHER = buildFault(1102, 'InvalidAccountId', 'The account ID is not valid.');
+
+  const assign = (target, source) => {
+    if (!source) return target;
+    Object.keys(source).forEach((key) => {
+      target[key] = source[key];
+    });
+    return target;
+  };
+
+  const baseMockData = {
+    conversionName: 'Offline Purchase',
+    authFlow: 'own',
+    clientId: 'client-id',
+    clientSecret: 'client/secret',
+    refreshToken: 'ui-refresh-token',
+    customerAccountId: '123456789',
+    customerId: '12345678',
+    developerToken: 'dev-token',
+    microsoftClickId: '_uet' + CLICK_ID,
+    conversionCurrencyCode: 'USD',
+    firebasePath: 'stape/microsoft-ads-offline-auth',
+    adStorageConsent: 'optional',
+    useOptimisticScenario: false
+  };
+  const createMockData = (overrides) => assign(assign({}, baseMockData), overrides);
+
+  const hash = (value) => sha256Sync(value, { outputEncoding: 'hex' });
+
+  // Firestore results settle synchronously, so each runCode() finishes before the next
+  // .forEach iteration re-mocks the APIs and no assertion needs callLater().
+  const resolved = (value) => ({ then: (onSuccess) => onSuccess(value) });
+  const rejected = (reason) => ({ then: (onSuccess, onFailure) => onFailure(reason) });
+
+  // storedTokens undefined means the Firestore document does not exist.
+  const mockFirestore = (storedTokens, writeFails) => {
+    const calls = { reads: [], writes: [] };
+    mockObject('Firestore', {
+      read: (path, options) => {
+        calls.reads.push({ path: path, options: options });
+        if (!storedTokens) return rejected({ reason: 'not_found' });
+        return resolved({ id: 'auth', data: storedTokens });
+      },
+      write: (path, input, options) => {
+        calls.writes.push({ path: path, input: input, options: options });
+        if (writeFails) return rejected({ reason: 'permission_denied' });
+        return resolved('auth');
+      }
+    });
+    return calls;
+  };
+
+  // sendHttpRequest (callback form) mock: answers API and token requests from separate queues.
+  const mockHttp = (apiResponses, authResponses) => {
+    const requests = [];
+    let apiIndex = 0;
+    let authIndex = 0;
+    mock('sendHttpRequest', (url, callback, options, body) => {
+      requests.push({ url: url, options: options, body: body });
+      let response;
+      if (url === AUTH_URL) {
+        response = authResponses[authIndex];
+        authIndex++;
+      } else {
+        response = apiResponses[apiIndex];
+        apiIndex++;
+      }
+      if (!response) return fail('Unexpected request to ' + url);
+      callback(response.statusCode, {}, response.body);
+    });
+    return requests;
+  };
+
+  mock('getAllEventData', () => ({ page_location: 'https://example.com/thank-you' }));
+  mock('getRequestHeader', () => undefined);
+  mock('getTimestampMillis', () => 1763337600000);
+  mockFirestore(STORED_TOKENS);
 
 
 ___NOTES___
+
+2026-11-17 - Change Notes:
+  - Fix the default Conversion Time: the timestamp converter produced invalid values such as T24:00 at midnight and wrong dates around month starts and century years; it now uses the Firestore templates' converter
+  - Remove the "_uet" prefix from Microsoft Click ID so the raw _uetmsclkid cookie value can be used (#9); click IDs that start with "f" are kept intact
+  - Refresh the access token once on 401, InvalidCredentials or AuthenticationTokenExpired (any HTTP status), fall back to the UI refresh token when the stored one is rejected, and fail the tag on SOAP faults, BatchErrors and invalid token responses instead of reporting success (#10)
+  - Add the early-exit check (consent and Measurement Protocol renderer requests, via the referer header permission) and the Use Optimistic Scenario option
+  - Use the first valid item of Email/Phone arrays with full normalization and skip sending when no usable identifier is left; improve help texts across fields and add unit tests
 
 2026-05-25 Change Notes:
  - Logging removal.
